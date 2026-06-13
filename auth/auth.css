@@ -1,0 +1,72 @@
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;min-height:100%;background:#050713;color:#fff;font-family:Inter,system-ui,sans-serif;overflow-x:hidden;overflow-y:auto}
+body{min-height:100dvh}
+#authStars{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.back{position:fixed;left:22px;top:22px;z-index:4;color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.18);padding:11px 14px;border-radius:999px;background:rgba(0,0,0,.32);backdrop-filter:blur(14px);font-weight:900}
+.auth-shell{position:relative;z-index:2;min-height:100dvh;display:grid;grid-template-columns:1.1fr .9fr;gap:24px;align-items:center;padding:5vw 5vw 42px}
+.auth-hero p{margin:0 0 10px;color:#75ffb9;text-transform:uppercase;letter-spacing:.26em;font-weight:900}.auth-hero h1{margin:0;font-family:Syne,sans-serif;font-size:clamp(62px,11vw,150px);line-height:.8;letter-spacing:-.1em;background:linear-gradient(100deg,#fff,#75ffb9,#38cbff);-webkit-background-clip:text;background-clip:text;color:transparent}.auth-hero h2{font-size:clamp(24px,4vw,56px);margin:20px 0 12px}.auth-hero span{display:block;max-width:620px;color:rgba(255,255,255,.68);font-size:18px;line-height:1.45}
+.auth-card{border:1px solid rgba(255,255,255,.15);border-radius:32px;background:rgba(0,0,0,.42);backdrop-filter:blur(22px);padding:20px;box-shadow:0 30px 100px rgba(0,0,0,.44)}.switcher{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}.switcher button,.primary{border:1px solid rgba(255,255,255,.18);border-radius:18px;background:rgba(255,255,255,.08);color:#fff;padding:14px 16px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;cursor:pointer}.switcher button.active,.primary{background:linear-gradient(135deg,rgba(117,255,185,.24),rgba(56,203,255,.18));border-color:rgba(117,255,185,.45);box-shadow:0 0 34px rgba(117,255,185,.12)}.panel{display:none}.panel.active{display:grid;gap:12px}label{display:grid;gap:7px;color:rgba(255,255,255,.74);font-size:13px;text-transform:uppercase;letter-spacing:.08em;font-weight:900}label small{font-weight:600;color:rgba(255,255,255,.48);text-transform:none}input{width:100%;border:1px solid rgba(255,255,255,.14);border-radius:16px;background:rgba(255,255,255,.08);color:#fff;padding:13px 14px;outline:none;font-size:16px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.status{min-height:24px;color:#75ffb9;font-weight:800}.status.error{color:#ff8dad}.mini{color:rgba(255,255,255,.52);font-size:12px;line-height:1.4}
+@media(max-width:860px){.back{top:14px;left:14px}.auth-shell{grid-template-columns:1fr;align-items:start;padding:86px 18px 36px;gap:28px}.auth-hero h1{font-size:64px}.auth-hero h2{font-size:38px}.auth-hero span{font-size:15px}.auth-card{border-radius:26px;padding:16px}.grid2{grid-template-columns:1fr}.switcher button,.primary{padding:13px 12px}input{font-size:16px;padding:13px 12px}}
+@media(max-width:430px){.auth-shell{padding-left:14px;padding-right:14px}.auth-hero h1{font-size:58px}.auth-hero p{letter-spacing:.2em}.auth-card{padding:14px;border-radius:22px}}
+
+
+/* SoulMatch mobile register scroll fix */
+html, body {
+  height: auto !important;
+  min-height: 100%;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+.auth-shell {
+  overflow: visible !important;
+}
+
+.auth-card {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+@media (max-width: 860px) {
+  body {
+    position: relative !important;
+  }
+  .auth-shell {
+    min-height: auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    padding-top: 86px !important;
+    padding-bottom: 110px !important;
+  }
+  .auth-hero {
+    width: 100% !important;
+  }
+  .auth-card {
+    width: 100% !important;
+    margin-bottom: 64px !important;
+  }
+  .panel.active {
+    display: grid !important;
+  }
+  .back {
+    position: absolute !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .auth-shell {
+    padding-top: 78px !important;
+    padding-bottom: 130px !important;
+  }
+  .auth-hero h1 {
+    font-size: clamp(48px, 16vw, 58px) !important;
+    letter-spacing: -0.08em !important;
+  }
+  .auth-hero h2 {
+    font-size: 32px !important;
+  }
+}

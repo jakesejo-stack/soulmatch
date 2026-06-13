@@ -1,0 +1,13 @@
+document.addEventListener('DOMContentLoaded', async () => {
+  scheme5.initGalaxy?.();
+  scheme5.initMusic?.();
+  scheme5.initViewToggle?.();
+  scheme5.initAuth?.();
+
+  try {
+    await scheme5.restoreSession();
+  } catch (err) {
+    console.warn('Auth server not available.', err);
+    scheme5.setAuthStatus('Start with node server.js for register/login saving.', true);
+  }
+});

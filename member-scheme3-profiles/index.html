@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Member Scheme 3 / Profiles</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Syne:wght@700;800&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link rel="stylesheet" href="./scheme3.css" />
+</head>
+<body>
+  <canvas id="webGLApp"></canvas>
+  <div class="liquid-vignette"></div>
+
+  <button class="back-btn" onclick="location.href='../member-scheme1/'">← Home</button>
+
+  <a class="livesky-entry" href="../scheme5/">✦ Echo AI Twin</a>
+
+  <div class="top-nav">
+    <button class="scheme-btn" data-scheme="1">One</button>
+    <button class="scheme-btn" data-scheme="2">Two</button>
+    <button class="scheme-btn active" data-scheme="3">Three</button>
+    <button class="scheme-btn" data-scheme="4">Four</button>
+    <button class="scheme-btn" data-scheme="5">Echo</button>
+  </div>
+
+  <div class="strip-zone" id="stripZone"></div>
+
+  <div class="brand-hero" id="brandHero">
+    <div class="brand-kicker">SoulFlame / Where People Connect</div>
+    <h1 class="brand-title">SoulMatch</h1>
+    <div class="brand-instruction"><span>Hover</span> / tap left or right</div>
+  </div>
+
+  <div class="intro-hint">tap anywhere once to enter the photo flow</div>
+  <div class="loading-note" id="loadingNote">Loading profiles...</div>
+
+  <script src="./scheme3.js"></script>
+</body>
+</html>

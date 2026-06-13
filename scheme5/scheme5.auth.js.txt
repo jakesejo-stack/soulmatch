@@ -1,0 +1,177 @@
+scheme5.setVerticalText = function (element, text) {
+  if (!element) return;
+
+  element.innerHTML = '';
+
+  Object.assign(element.style, {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    margin: '0 auto',
+    width: '120px',
+    minHeight: '260px',
+    fontSize: '38px',
+    fontWeight: '900',
+    lineHeight: '0.78',
+    letterSpacing: '2px',
+    color: '#fff',
+    textTransform: 'uppercase',
+    textAlign: 'center'
+  });
+
+  String(text).split('').forEach(letter => {
+    const span = document.createElement('span');
+    span.textContent = letter === ' ' ? '\u00A0' : letter;
+
+    Object.assign(span.style, {
+      display: 'block',
+      width: '100%',
+      textAlign: 'center'
+    });
+
+    element.appendChild(span);
+  });
+};
+
+scheme5.renderAccount = function (user) {
+  scheme5.state.currentUser = user;
+
+  const accountPanel = scheme5.el('accountPanel');
+
+  if (!user) {
+    document.body.classList.remove('is-logged-in');
+    accountPanel?.classList.remove('is-visible');
+    return;
+  }
+
+  const accountAvatar = scheme5.el('accountAvatar');
+  const accountName = scheme5.el('accountName');
+  const accountEmail = scheme5.el('accountEmail');
+  const accountPhotos = scheme5.el('accountPhotos');
+
+  const profileDisplayName = scheme5.el('profileDisplayName');
+  const profileAge = scheme5.el('profileAge');
+  const profileZodiac = scheme5.el('profileZodiac');
+  const profileQuote = scheme5.el('profileQuote');
+  const profileBio = scheme5.el('profileBio');
+
+  const profile = user.profile || {};
+  const displayName = profile.displayName || user.name;
+
+  document.body.classList.add('is-logged-in');
+  accountPanel?.classList.add('is-visible');
+
+  if (accountAvatar) accountAvatar.textContent = scheme5.userInitials(displayName);
+  if (accountName) scheme5.setVerticalText(accountName, 'SoulMatch');
+  if (accountEmail) accountEmail.textContent = user.email;
+
+  if (profileDisplayName) profileDisplayName.value = displayName || '';
+  if (profileAge) profileAge.value = profile.age || '';
+  if (profileZodiac) profileZodiac.value = profile.zodiac || '';
+  if (profileQuote) profileQuote.value = profile.quote || '';
+  if (profileBio) profileBio.value = profile.bio || '';
+
+  if (accountPhotos) {
+    accountPhotos.innerHTML = '';
+    (profile.photos || []).forEach(src => {
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = 'Profile photo';
+      accountPhotos.appendChild(img);
+    });
+  }
+};
+
+scheme5.initAuth = function () {
+  scheme5.el('registerBtn')?.addEventListener('click', async () => {
+    const name = scheme5.el('registerName')?.value.trim();
+    const email = scheme5.el('registerEmail')?.value.trim();
+    const password = scheme5.el('registerPassword')?.value;
+    const confirmPassword = scheme5.el('registerConfirm')?.value;
+
+    if (!name) return scheme5.setAuthStatus('Enter name.', true);
+    if (!email || !email.includes('@')) return scheme5.setAuthStatus('Enter valid email.', true);
+    if (!password || password.length < 6) return scheme5.setAuthStatus('Password min 6 chars.', true);
+    if (password !== confirmPassword) return scheme5.setAuthStatus('Passwords do not match.', true);
+
+    scheme5.setAuthStatus('Creating account...');
+
+    const result = await scheme5.postJson('/api/register', {
+      name,
+      email,
+      password,
+      confirmPassword
+    });
+
+    if (!result.ok) return scheme5.setAuthStatus(result.error || 'Register failed.', true);
+
+    scheme5.setAuthStatus('Account created. You are logged in.');
+    scheme5.renderAccount(result.user);
+  });
+
+  scheme5.el('loginBtn')?.addEventListener('click', async () => {
+    const email = scheme5.el('loginEmail')?.value.trim();
+    const password = scheme5.el('loginPassword')?.value;
+
+    if (!email || !password) return scheme5.setAuthStatus('Enter email and password.', true);
+
+    scheme5.setAuthStatus('Logging in...');
+
+    const result = await scheme5.postJson('/api/login', { email, password });
+
+    if (!result.ok) return scheme5.setAuthStatus(result.error || 'Login failed.', true);
+
+    scheme5.setAuthStatus('Logged in.');
+    scheme5.renderAccount(result.user);
+  });
+
+  scheme5.el('saveProfileBtn')?.addEventListener('click', async () => {
+    const result = await scheme5.postJson('/api/profile', {
+      displayName: scheme5.el('profileDisplayName')?.value,
+      age: scheme5.el('profileAge')?.value,
+      zodiac: scheme5.el('profileZodiac')?.value,
+      quote: scheme5.el('profileQuote')?.value,
+      bio: scheme5.el('profileBio')?.value
+    });
+
+    if (!result.ok) return alert(result.error || 'Save failed.');
+
+    scheme5.renderAccount(result.user);
+    scheme5.setAuthStatus('Profile saved. Scheme 5 data/users.json updated.');
+  });
+
+  scheme5.el('profilePhotoInput')?.addEventListener('change', async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const form = new FormData();
+    form.append('photo', file);
+
+    const response = await fetch('/api/upload-photo', {
+      method: 'POST',
+      body: form
+    });
+
+    const result = await response.json();
+
+    if (!result.ok) return alert(result.error || 'Upload failed.');
+
+    event.target.value = '';
+    scheme5.renderAccount(result.user);
+    scheme5.setAuthStatus('Photo uploaded into scheme5/assets/users/<user-id>/');
+  });
+
+  scheme5.el('logoutBtn')?.addEventListener('click', async () => {
+    await scheme5.postJson('/api/logout', {});
+    scheme5.state.currentUser = null;
+    scheme5.renderAccount(null);
+    scheme5.setAuthStatus('Logged out.');
+  });
+};
+
+scheme5.restoreSession = async function () {
+  const response = await fetch('/api/me');
+  const result = await response.json();
+  if (result.user) scheme5.renderAccount(result.user);
+};

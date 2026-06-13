@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SoulMatch Auth</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Syne:wght@700;800&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./auth.css?v=vercel-register-scroll-2" />
+</head>
+<body>
+  <canvas id="authStars"></canvas>
+  <a class="back" href="../home/">← demo</a>
+  <main class="auth-shell">
+    <section class="auth-hero">
+      <p>One gate only</p>
+      <h1>SoulMatch</h1>
+      <h2>Register / Login</h2>
+      <span>After this you enter the 5-slide onboarding, then spawn in Echo AI Twin.</span>
+    </section>
+
+    <section class="auth-card">
+      <div class="switcher">
+        <button class="active" data-panel="loginPanel">Login</button>
+        <button data-panel="registerPanel">Register</button>
+      </div>
+
+      <div id="loginPanel" class="panel active">
+        <label>Email<input id="loginEmail" type="email" autocomplete="email" placeholder="you@email.com" /></label>
+        <label>Password<input id="loginPassword" type="password" autocomplete="current-password" placeholder="••••••" /></label>
+        <button id="loginBtn" class="primary">Login</button>
+      </div>
+
+      <div id="registerPanel" class="panel">
+        <label>Name<input id="registerName" type="text" placeholder="Your name" /></label>
+        <label>Email<input id="registerEmail" type="email" autocomplete="email" placeholder="you@email.com" /></label>
+        <div class="grid2">
+          <label>Birth date<input id="registerBirthDate" type="date" /></label>
+          <label>Birth time<input id="registerBirthTime" type="time" /></label>
+        </div>
+        <label>Height <small>1.30m – 1.90m</small><input id="registerHeight" type="number" min="1.30" max="1.90" step="0.01" placeholder="1.78" /></label>
+        <label>Password<input id="registerPassword" type="password" autocomplete="new-password" placeholder="min 6 symbols" /></label>
+        <label>Confirm password<input id="registerConfirm" type="password" autocomplete="new-password" /></label>
+        <button id="registerBtn" class="primary">Create profile</button>
+      </div>
+      <p id="authStatus" class="status"></p>
+      <p class="mini">Already logged in users are sent straight to onboarding / Echo AI Twin.</p>
+    </section>
+  </main>
+  <script src="./auth.js?v=vercel-register-scroll-2"></script>
+</body>
+</html>

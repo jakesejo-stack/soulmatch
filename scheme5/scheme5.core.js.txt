@@ -1,0 +1,52 @@
+'use strict';
+
+window.scheme5 = {
+  state: {
+    currentUser: null,
+    audioContext: null,
+    analyser: null,
+    masterGain: null,
+    musicStarted: false,
+    animationGain: 0
+  },
+
+  el(id) {
+    return document.getElementById(id);
+  },
+
+  setAuthStatus(message, error = false) {
+    const authStatus = scheme5.el('authStatus');
+    if (!authStatus) return;
+    authStatus.textContent = message || '';
+    authStatus.classList.toggle('error', Boolean(error));
+  },
+
+  userInitials(name) {
+    return String(name || 'SF')
+      .split(' ')
+      .map(x => x[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
+  },
+
+  async postJson(url, data) {
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        return { ok: false, error: result?.error || 'Server error.' };
+      }
+
+      return result;
+    } catch (err) {
+      return { ok: false, error: 'Server not available. Start with node server.js.' };
+    }
+  }
+};

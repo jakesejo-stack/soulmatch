@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SoulMatch Scheme 2 / City Slider</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />  <link rel="stylesheet" href="./scheme2.css" />
+</head>
+<body>
+  <div class="city-cont">
+    <div class="city-slider" id="citySlider"></div>
+    <ul class="city-nav" id="cityNav"></ul>
+    <div data-target="right" class="city-side-nav city-side-nav--right"></div>
+    <div data-target="left" class="city-side-nav city-side-nav--left"></div>
+    <div class="city-hint">Scheme Two / Burgas / Sofia / Varna / Stara Zagora</div>
+  </div>
+
+  <div class="color-controls">
+    <button class="color-btn" data-scheme="1">One</button>
+    <button class="color-btn active" data-scheme="2">Two</button>
+    <button class="color-btn" data-scheme="3">Three</button>
+    <button class="color-btn" data-scheme="4">Four</button>
+    <button class="color-btn" data-scheme="5">Echo</button>
+  </div>
+
+  <div class="custom-cursor" id="customCursor"></div>
+  <script src="./scheme2.js"></script>
+</body>
+</html>

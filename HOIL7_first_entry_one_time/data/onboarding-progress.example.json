@@ -1,0 +1,8 @@
+{
+  "userId": "user_001",
+  "email": "demo@soulmatch.app",
+  "onboardingDone": true,
+  "lastStep": 4,
+  "completedAt": "future-backend-timestamp",
+  "nextRoute": "/scheme3/"
+}

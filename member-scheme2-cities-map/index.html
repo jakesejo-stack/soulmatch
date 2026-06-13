@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Member Cities + AR Live Map</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;700&family=Inter:wght@400;700;900&family=Syne:wght@800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./member-cities.css">
+</head>
+<body>
+<nav class="member-nav">
+  <a href="../member-scheme1/">1 SoulMatch</a>
+  <a href="../member-scheme2-cities-map/">2 Cities + AR Map</a>
+  <a href="../member-scheme3-profiles/">3 Profiles</a>
+  <a href="../member-scheme4-memories/">4 Memories</a>
+  <a href="../scheme5/">5 Echo AI</a>
+</nav>
+
+<section class="city-cont" aria-label="Bulgaria city slides">
+  <div class="city-slider" id="citySlider"></div>
+  <ul class="city-nav" id="cityNav"></ul>
+  <button class="side left" id="leftBtn" aria-label="Previous city">‹</button>
+  <button class="side right" id="rightBtn" aria-label="Next city">›</button>
+  <div class="hint">Swipe / wheel / arrows · last slide opens AR Live Map</div>
+</section>
+<button id="mapFloatCta" class="map-float-cta" type="button">↓ Real-time AR Map</button>
+
+<section id="liveMapSection" class="live-map-section">
+  <div class="cube-wrap" id="cubeWrap">
+    <div class="cube" id="mapCube"><span>MAP</span><span>LIVE</span><span>POV</span><span>AR</span></div>
+    <p class="cube-hint">3D cube unlocks the map engine</p>
+  </div>
+
+  <div class="map-copy">
+    <small>Live Map / Around You</small>
+    <h1>AR POV map engine</h1>
+    <p>Use your exact private coordinates, open a real map around you, move the POV forward/back/left/right, and keep your public location approximate.</p>
+    <div class="map-actions">
+      <button id="useLocationBtn" type="button">Use my real location</button>
+      <button id="watchLocationBtn" type="button">Live tracking</button>
+      <button id="stopWatchBtn" type="button">Stop tracking</button>
+      <button id="savePrivateLocationBtn" type="button">Save private location</button>
+      <button id="show24Btn" type="button">Last 24h</button>
+      <button id="show7Btn" type="button">Last 7 days</button>
+      <a id="mapsLink" target="_blank" rel="noreferrer" href="https://maps.google.com">Open Google Maps</a>
+      <a id="streetViewLink" target="_blank" rel="noreferrer" href="https://maps.google.com">Open Street View POV</a>
+    </div>
+    <div id="locationOutput" class="output">Location not requested yet.</div>
+  </div>
+
+  <div class="ar-engine" id="arEngine">
+    <div class="ar-head">
+      <div>
+        <small>Private coordinates → public approximate area</small>
+        <h2>Open-world AR map simulator</h2>
+      </div>
+      <div class="engine-badges">
+        <span id="gpsStatus">GPS idle</span>
+        <span id="movementStatus">WASD / arrows / touch</span>
+      </div>
+    </div>
+
+    <div class="ar-layout">
+      <div class="pov-shell">
+        <div class="pov-screen" id="povScreen">
+          <div class="pov-sky"></div>
+          <div class="pov-horizon"></div>
+          <div class="pov-road"></div>
+          <div class="pov-grid"></div>
+          <div class="pov-pin">YOU</div>
+          <img class="pov-avatar" id="avatarPreview" src="../assets/avatar/default-avatar.svg" alt="Your avatar preview">
+          <div class="pov-crosshair"></div>
+          <div class="pov-coords" id="povCoords">Waiting for coordinates...</div>
+        </div>
+        <div class="controls">
+          <button data-move="forward">▲</button>
+          <button data-move="left">◀</button>
+          <button data-move="back">▼</button>
+          <button data-move="right">▶</button>
+          <button data-turn="left">Turn −</button>
+          <button data-turn="right">Turn +</button>
+          <button id="resetPovBtn" type="button">Reset to GPS</button>
+        </div>
+      </div>
+
+      <div class="real-map-shell">
+        <iframe id="googleMapFrame" title="Real map around your location" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=Bulgaria&z=7&output=embed"></iframe>
+        <div class="mini-map" id="miniMap"><span>You are here</span></div>
+      </div>
+    </div>
+
+    <form id="avatarForm" class="avatar-form">
+      <h2>Own avatar</h2>
+      <p>Upload a photo or short video to appear inside the AR map view. The file stays local/dev in your project while we prototype.</p>
+      <input id="avatarFile" name="avatar" type="file" accept="image/*,video/*">
+      <button type="submit">Upload avatar</button>
+      <div id="avatarOutput" class="output small-output">No avatar uploaded yet.</div>
+    </form>
+  </div>
+
+  <form id="updateForm" class="update-form">
+    <h2>Upload Live News</h2>
+    <input id="updateText" placeholder="What is happening around you?" maxlength="220">
+    <select id="updateVisibility"><option value="24h">Visible 24h</option><option value="7d">Visible 7 days</option></select>
+    <button>Post pending update</button>
+  </form>
+
+  <div class="news-panel">
+    <h2>Live News Around</h2>
+    <p class="muted">Updates are pending by default. Approved updates can later become Echo tasks/memories.</p>
+    <div id="updatesList"></div>
+  </div>
+</section>
+
+<script src="./member-cities.js"></script>
+<script src="./ar-map-engine.js"></script>
+</body>
+</html>

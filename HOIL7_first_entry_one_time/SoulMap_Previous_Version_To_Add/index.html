@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>POV 360 Star Space With Constellations</title>
+
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+    }
+  }
+  </script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .sky-viewer-background {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background:
+        radial-gradient(ellipse at 52% 62%, rgba(22, 82, 148, .10), transparent 32%),
+        radial-gradient(ellipse at 48% 28%, rgba(42, 116, 255, .10), transparent 42%),
+        linear-gradient(to bottom, #00030a 0%, #020611 50%, #000 100%);
+      cursor: grab;
+    }
+
+    .sky-viewer-background:active { cursor: grabbing; }
+
+    .css-star-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 11;
+      pointer-events: none;
+      overflow: hidden;
+      perspective: 1195px;
+      perspective-origin: 50% 50%;
+    }
+
+    #css-world,
+    #css-camera {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+    }
+
+    .marker,
+    .legacymarker {
+      position: absolute;
+      left: 0;
+      top: 0;
+      transform-origin: 0% 0%;
+      opacity: 0;
+      will-change: transform, opacity;
+      transition: opacity .18s ease, filter .18s ease;
+      font-family: Lekton, 'DM Mono', monospace;
+      font-size: 18px;
+      line-height: 1;
+      color: rgba(235, 248, 255, .86);
+      text-shadow:
+        0 0 6px rgba(90, 185, 255, .82),
+        0 0 18px rgba(90, 185, 255, .34),
+        0 2px 6px rgba(0,0,0,.95);
+      filter: url(#svg-glow);
+    }
+
+    .marker .name,
+    .legacymarker .name {
+      display: inline-block;
+      padding: 3px 7px;
+      border: 1px solid rgba(120,210,255,.12);
+      border-radius: 999px;
+      background: rgba(0,0,0,.18);
+      backdrop-filter: blur(4px);
+      white-space: nowrap;
+      letter-spacing: .04em;
+    }
+
+    .marker.is-visible {
+      opacity: .92;
+    }
+
+    .marker.is-focus {
+      color: rgba(255,255,255,.98);
+      text-shadow:
+        0 0 8px rgba(255,255,255,.95),
+        0 0 18px rgba(255,70,90,.62),
+        0 0 28px rgba(60,255,140,.45),
+        0 0 42px rgba(70,150,255,.50);
+    }
+
+    .marker.is-focus .name {
+      border-color: rgba(200,240,255,.34);
+      background: rgba(2,10,24,.54);
+    }
+
+    .sky-vignette {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at center, transparent 0 48%, rgba(0,0,0,.34) 78%, rgba(0,0,0,.92) 100%),
+        linear-gradient(to bottom, rgba(0,0,0,.12), transparent 40%, rgba(0,0,0,.38) 100%);
+      z-index: 3;
+    }
+
+    .sky-help {
+      position: fixed;
+      left: 50%;
+      bottom: 22px;
+      z-index: 5;
+      transform: translateX(-50%);
+      padding: 8px 13px;
+      border: 1px solid rgba(90, 180, 255, .18);
+      border-radius: 999px;
+      background: rgba(2, 8, 18, .28);
+      color: rgba(210, 232, 255, .62);
+      font: 11px/1.2 monospace;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      backdrop-filter: blur(12px);
+      pointer-events: none;
+    }
+
+    .constellation-tooltip {
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: 12;
+      transform: translate(-50%, calc(-100% - 18px));
+      padding: 8px 12px;
+      border: 1px solid rgba(120, 210, 255, .32);
+      border-radius: 999px;
+      background: rgba(2, 10, 24, .58);
+      color: rgba(225, 244, 255, .94);
+      font: 700 12px/1.2 Arial, sans-serif;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 0 22px rgba(80, 180, 255, .22), inset 0 1px 0 rgba(255,255,255,.10);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease, transform .18s ease;
+      text-shadow: 0 0 12px rgba(120,210,255,.62);
+      white-space: nowrap;
+    }
+
+    .constellation-tooltip.show {
+      opacity: 1;
+      transform: translate(-50%, calc(-100% - 24px));
+    }
+
+    .zodiac-info-panel {
+      position: fixed;
+      right: 22px;
+      top: 22px;
+      z-index: 15;
+      width: min(360px, calc(100vw - 44px));
+      padding: 18px;
+      border: 1px solid rgba(120, 210, 255, .22);
+      border-radius: 24px;
+      background: rgba(2, 10, 24, .58);
+      color: rgba(225, 244, 255, .94);
+      backdrop-filter: blur(18px) saturate(1.35);
+      box-shadow: 0 22px 80px rgba(0,0,0,.45), 0 0 34px rgba(80,180,255,.12);
+      opacity: 0;
+      transform: translateY(-14px);
+      pointer-events: none;
+      transition: .24s ease;
+      font-family: Arial, sans-serif;
+    }
+
+    .zodiac-info-panel.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .zodiac-close {
+      position: absolute;
+      right: 12px;
+      top: 10px;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      border: 1px solid rgba(120,210,255,.22);
+      background: rgba(255,255,255,.04);
+      color: rgba(225,244,255,.9);
+      cursor: pointer;
+      font-size: 20px;
+    }
+
+    .zodiac-kicker {
+      font: 700 10px/1.2 monospace;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+      color: rgba(150,210,255,.68);
+      margin-bottom: 8px;
+    }
+
+    .zodiac-info-panel h2 {
+      font: 800 clamp(30px, 5vw, 54px)/.86 Arial, sans-serif;
+      letter-spacing: -.08em;
+      margin-bottom: 10px;
+      text-shadow: 0 0 18px rgba(120,210,255,.45), 0 2px 3px rgba(0,0,0,.92);
+    }
+
+    .zodiac-info-panel p {
+      font-size: 14px;
+      line-height: 1.5;
+      color: rgba(225,244,255,.74);
+      margin-bottom: 14px;
+    }
+
+    .zodiac-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .zodiac-grid div {
+      border: 1px solid rgba(120,210,255,.12);
+      border-radius: 16px;
+      padding: 10px;
+      background: rgba(255,255,255,.03);
+    }
+
+    .zodiac-grid span {
+      display: block;
+      font: 700 9px/1.2 monospace;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(150,210,255,.58);
+      margin-bottom: 4px;
+    }
+
+    .zodiac-grid strong {
+      font-size: 12px;
+      color: rgba(240,248,255,.92);
+    }
+
+    .soul-sphere-core {
+      position: fixed;
+      left: 50%;
+      top: 52%;
+      z-index: 2;
+      width: min(34vw, 340px);
+      aspect-ratio: 1;
+      transform: translate(-50%, -50%);
+      border-radius: 50%;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 50%, rgba(255,255,255,.95) 0 2%, rgba(125,225,255,.80) 4%, rgba(60,170,255,.36) 12%, rgba(20,90,255,.12) 35%, rgba(0,0,0,0) 70%),
+        radial-gradient(circle at 42% 35%, rgba(255,255,255,.62), transparent 18%),
+        radial-gradient(circle at 60% 66%, rgba(80,255,180,.18), transparent 32%);
+      box-shadow:
+        0 0 42px rgba(100,210,255,.32),
+        0 0 120px rgba(60,160,255,.16),
+        inset 0 0 52px rgba(255,255,255,.18);
+      opacity: .42;
+      mix-blend-mode: screen;
+      animation: sphereBreath 5.5s ease-in-out infinite;
+    }
+
+    .soul-sphere-inner {
+      position: absolute;
+      inset: 15%;
+      border-radius: 50%;
+      background:
+        conic-gradient(from 0deg, rgba(255,70,90,.12), rgba(80,255,170,.16), rgba(60,140,255,.20), rgba(255,70,90,.12));
+      filter: blur(3px);
+      animation: sphereSpin 12s linear infinite;
+    }
+
+    @keyframes sphereBreath {
+      0%, 100% { transform: translate(-50%, -50%) scale(.96); opacity: .34; }
+      50% { transform: translate(-50%, -50%) scale(1.05); opacity: .52; }
+    }
+
+    @keyframes sphereSpin { to { transform: rotate(360deg); } }
+
+    .map-style-toolbar {
+      position: fixed;
+      top: 18px;
+      right: 22px;
+      z-index: 16;
+      display: flex;
+      gap: 10px;
+    }
+
+    .map-style-toolbar button {
+      width: 38px;
+      height: 38px;
+      border: 1px solid rgba(120,210,255,.16);
+      background: rgba(0,0,0,.42);
+      color: rgba(245,252,255,.92);
+      border-radius: 3px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 26px rgba(0,0,0,.35), 0 0 18px rgba(80,180,255,.08);
+      font: 700 18px/1 Arial, sans-serif;
+    }
+
+    .star-compass {
+      position: fixed;
+      right: 24px;
+      bottom: 74px;
+      z-index: 9;
+      width: 86px;
+      height: 86px;
+      border: 1px solid rgba(120,210,255,.20);
+      border-radius: 50%;
+      background: rgba(0,0,0,.20);
+      backdrop-filter: blur(8px);
+      box-shadow: inset 0 0 22px rgba(80,180,255,.08), 0 0 24px rgba(80,180,255,.08);
+      color: rgba(220,242,255,.72);
+      font: 700 11px/1 monospace;
+      pointer-events: none;
+    }
+
+    .star-compass span { position: absolute; }
+    .compass-n { top: 8px; left: 50%; transform: translateX(-50%); }
+    .compass-s { bottom: 8px; left: 50%; transform: translateX(-50%); }
+    .compass-e { right: 8px; top: 50%; transform: translateY(-50%); }
+    .compass-w { left: 8px; top: 50%; transform: translateY(-50%); }
+
+    .zodiac-search-box {
+      position: fixed;
+      left: 22px;
+      top: 22px;
+      z-index: 16;
+      width: min(340px, calc(100vw - 44px));
+      padding: 10px;
+      border: 1px solid rgba(120, 210, 255, .22);
+      border-radius: 22px;
+      background: rgba(2, 10, 24, .48);
+      backdrop-filter: blur(18px) saturate(1.35);
+      box-shadow: 0 22px 80px rgba(0,0,0,.38), 0 0 30px rgba(80,180,255,.10);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+
+    .zodiac-search-box input {
+      min-width: 0;
+      border: 1px solid rgba(120,210,255,.18);
+      border-radius: 999px;
+      background: rgba(0,0,0,.25);
+      color: rgba(235,248,255,.94);
+      outline: none;
+      padding: 11px 13px;
+      font: 700 12px/1.2 monospace;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    .zodiac-search-box input::placeholder {
+      color: rgba(180,220,255,.45);
+    }
+
+    .zodiac-search-box button {
+      border: 1px solid rgba(120,210,255,.22);
+      border-radius: 999px;
+      background: rgba(80,180,255,.14);
+      color: rgba(235,248,255,.92);
+      cursor: pointer;
+      padding: 0 14px;
+      font: 700 11px/1.2 monospace;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      box-shadow: 0 0 18px rgba(80,180,255,.12);
+    }
+
+    .zodiac-suggestions {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      max-height: 86px;
+      overflow: auto;
+    }
+
+    .zodiac-chip {
+      border: 1px solid rgba(120,210,255,.13);
+      border-radius: 999px;
+      background: rgba(255,255,255,.035);
+      color: rgba(210,235,255,.72);
+      padding: 6px 9px;
+      font: 700 10px/1.2 monospace;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    .zodiac-chip:hover,
+    .zodiac-chip.active {
+      color: rgba(245,252,255,.98);
+      background: rgba(80,180,255,.18);
+      box-shadow: 0 0 16px rgba(80,180,255,.18);
+    }
+
+    .ellipse-toggle {
+      position: fixed;
+      right: 22px;
+      bottom: 22px;
+      z-index: 8;
+      padding: 9px 13px;
+      border: 1px solid rgba(90, 180, 255, .22);
+      border-radius: 999px;
+      background: rgba(2, 8, 18, .34);
+      color: rgba(210, 232, 255, .78);
+      font: 11px/1.2 monospace;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      cursor: pointer;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 0 18px rgba(90, 180, 255, .08);
+    }
+
+    .ellipse-toggle.off {
+      opacity: .45;
+    }
+
+    .lock-view-btn {
+      right: 128px;
+    }
+
+    .lock-view-btn.locked {
+      opacity: 1;
+      color: rgba(180,255,220,.92);
+      border-color: rgba(120,255,190,.34);
+      background: rgba(70,255,160,.14);
+      box-shadow: 0 0 20px rgba(70,255,160,.16);
+    }
+
+    .pov-reticle {
+      position: fixed;
+      left: 50%;
+      top: 50%;
+      z-index: 4;
+      width: 42px;
+      height: 42px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      opacity: .38;
+    }
+
+    .pov-reticle::before,
+    .pov-reticle::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(120, 210, 255, .45);
+      box-shadow: 0 0 12px rgba(120, 210, 255, .35);
+    }
+
+    .pov-reticle::before {
+      width: 42px;
+      height: 1px;
+    }
+
+    .pov-reticle::after {
+      width: 1px;
+      height: 42px;
+    }
+
+    .pov-horizon-glow {
+      position: fixed;
+      inset: auto 0 0 0;
+      height: 38vh;
+      z-index: 1;
+      pointer-events: none;
+      background: radial-gradient(ellipse at 50% 100%, rgba(30, 110, 210, .18), transparent 52%);
+      opacity: .55;
+    }
+
+    @media (max-width: 640px) {
+      .sky-help {
+        width: calc(100vw - 28px);
+        text-align: center;
+        font-size: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="sky-viewer-background" id="skyViewerBackground" aria-label="360 star background"></main>
+  <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+    <filter id="svg-glow">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="3" result="blur" />
+      <feOffset dx="1.5" dy="1.5" result="offsetBlur" />
+      <feMerge>
+        <feMergeNode in="offsetBlur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </svg>
+
+  <div style="display:none">
+    <span id="marker_template" class="marker"><span class="name"> </span></span>
+    <span id="legacy_marker_template" class="legacymarker"><span class="name"> </span></span>
+  </div>
+
+  <div id="css-container" class="css-star-overlay">
+    <div id="css-world">
+      <div id="css-camera"></div>
+    </div>
+  </div>
+  <div class="sky-vignette"></div>
+  <div class="sky-help">Search zodiac → accurate focus · visible stars · RGB constellation glow</div>
+  <div class="constellation-tooltip" id="constellationTooltip">Constellation</div>
+  <section class="zodiac-info-panel" id="zodiacInfoPanel">
+    <button class="zodiac-close" id="zodiacClose">×</button>
+    <div class="zodiac-kicker" id="zodiacKicker">Zodiac focus</div>
+    <h2 id="zodiacTitle">Aries</h2>
+    <p id="zodiacText">Tap a zodiac constellation to zoom and read its meaning.</p>
+    <div class="zodiac-grid">
+      <div><span>Element</span><strong id="zodiacElement">Fire</strong></div>
+      <div><span>Energy</span><strong id="zodiacEnergy">Initiation</strong></div>
+      <div><span>Myth</span><strong id="zodiacMyth">Ram</strong></div>
+    </div>
+  </section>
+  <div class="zodiac-search-box">
+    <input id="zodiacSearchInput" type="text" placeholder="Search your zodiac..." autocomplete="off" />
+    <button id="zodiacSearchBtn">Zoom</button>
+    <div class="zodiac-suggestions" id="zodiacSuggestions"></div>
+  </div>
+  <div class="soul-sphere-core" aria-hidden="true">
+    <div class="soul-sphere-inner"></div>
+  </div>
+
+  <div class="map-style-toolbar" aria-hidden="true">
+    <button title="Menu">☰</button>
+    <button title="Search">⌕</button>
+    <button title="Layers">▧</button>
+    <button title="Sphere">◎</button>
+    <button title="Fullscreen">⛶</button>
+  </div>
+
+  <div class="star-compass" aria-hidden="true">
+    <span class="compass-n">N</span><span class="compass-e">E</span><span class="compass-s">S</span><span class="compass-w">W</span>
+  </div>
+
+  <button class="ellipse-toggle lock-view-btn" id="lockViewBtn">Lock view</button>
+  <button class="ellipse-toggle" id="ellipseToggle">POV drift</button>
+  <div class="pov-reticle"></div>
+  <div class="pov-horizon-glow"></div>
+
+  <script type="module">
+    import * as THREE from 'three';
+
+    const mount = document.getElementById('skyViewerBackground');
+
+    let scene, camera, renderer;
+    let starDome, deepDust, constellationLayer, labelLayer, sphereConstellationShell, celestialGrid;
+    let raycaster, pointer;
+    let hoverTarget = null;
+    let pinnedTarget = null;
+    let selectedStar = null;
+    let targetFov = 82;
+    let currentFov = 82;
+    const constellationTargets = [];
+    const starTargets = [];
+    const cssCamera = document.getElementById('css-camera');
+    const cssStarMarkers = [];
+    const zodiacHitByName = new Map();
+    const zodiacNames = ['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+    const zodiacAliases = {
+      aries: 'Aries', oven: 'Aries', овен: 'Aries',
+      taurus: 'Taurus', telec: 'Taurus', телец: 'Taurus',
+      gemini: 'Gemini', bliznaci: 'Gemini', близнаци: 'Gemini',
+      cancer: 'Cancer', rak: 'Cancer', рак: 'Cancer',
+      leo: 'Leo', lav: 'Leo', лъв: 'Leo', luv: 'Leo',
+      virgo: 'Virgo', deva: 'Virgo', дева: 'Virgo',
+      libra: 'Libra', vezni: 'Libra', везни: 'Libra',
+      scorpio: 'Scorpio', scorpius: 'Scorpio', skorpion: 'Scorpio', скорпион: 'Scorpio',
+      sagittarius: 'Sagittarius', strelec: 'Sagittarius', стрелец: 'Sagittarius',
+      capricorn: 'Capricorn', kozirog: 'Capricorn', козирог: 'Capricorn',
+      aquarius: 'Aquarius', vodolei: 'Aquarius', водолей: 'Aquarius',
+      pisces: 'Pisces', ribi: 'Pisces', риби: 'Pisces'
+    };
+    const tooltip = document.getElementById('constellationTooltip');
+    const zodiacPanel = document.getElementById('zodiacInfoPanel');
+    const zodiacTitle = document.getElementById('zodiacTitle');
+    const zodiacText = document.getElementById('zodiacText');
+    const zodiacElement = document.getElementById('zodiacElement');
+    const zodiacEnergy = document.getElementById('zodiacEnergy');
+    const zodiacMyth = document.getElementById('zodiacMyth');
+
+    const ZODIAC_INFO = {
+      Aries: { element: 'Fire', energy: 'Start', myth: 'Golden Ram', text: 'Aries is the ignition point: impulse, courage, first move, raw spark. In SoulMap it means you act before the world is ready.' },
+      Taurus: { element: 'Earth', energy: 'Stability', myth: 'Celestial Bull', text: 'Taurus is body, value, loyalty and patience. In SoulMap it shows what you protect, build and refuse to lose.' },
+      Gemini: { element: 'Air', energy: 'Signal', myth: 'The Twins', text: 'Gemini is curiosity, dual mind, language and quick connection. In SoulMap it shows how your mind jumps between worlds.' },
+      Cancer: { element: 'Water', energy: 'Memory', myth: 'The Crab', text: 'Cancer is emotional memory, home, protection and instinct. In SoulMap it shows what makes you feel safe enough to open.' },
+      Leo: { element: 'Fire', energy: 'Radiance', myth: 'Nemean Lion', text: 'Leo is solar presence, pride, performance and heart. In SoulMap it shows where you need to be seen and chosen.' },
+      Virgo: { element: 'Earth', energy: 'Precision', myth: 'The Maiden', text: 'Virgo is pattern, refinement, service and analysis. In SoulMap it shows how you improve chaos into something useful.' },
+      Libra: { element: 'Air', energy: 'Balance', myth: 'The Scales', text: 'Libra is harmony, beauty, mirroring and justice. In SoulMap it shows how you seek connection without losing yourself.' },
+      Scorpio: { element: 'Water', energy: 'Depth', myth: 'The Scorpion', text: 'Scorpio is intensity, secrecy, transformation and magnetism. In SoulMap it shows what pulls you into shadow and truth.' },
+      Sagittarius: { element: 'Fire', energy: 'Quest', myth: 'The Archer', text: 'Sagittarius is horizon, belief, adventure and aim. In SoulMap it shows where your soul wants freedom, meaning and risk.' },
+      Capricorn: { element: 'Earth', energy: 'Climb', myth: 'Sea-Goat', text: 'Capricorn is structure, pressure, ambition and legacy. In SoulMap it shows what you are willing to climb for.' },
+      Aquarius: { element: 'Air', energy: 'Future', myth: 'Water Bearer', text: 'Aquarius is systems, distance, rebellion and future vision. In SoulMap it shows your strange signal and outsider intelligence.' },
+      Pisces: { element: 'Water', energy: 'Dream', myth: 'Two Fish', text: 'Pisces is intuition, empathy, dream and surrender. In SoulMap it shows where you dissolve boundaries and feel the invisible.' }
+    };
+
+    const STAR_INFO = {
+      Aries: { Hamal: 'Hamal is the bright leader star of Aries: first spark, courage, pure forward motion.', Sheratan: 'Sheratan marks the second horn: quick decisions, friction and impulse.', Mesarthim: 'Mesarthim carries the ignition gate: raw activation and beginning.' },
+      Taurus: { Aldebaran: 'Aldebaran is the eye of the Bull: value, focus, wealth, protection and stubborn fire.', Elnath: 'Elnath marks the horn: pressure, direction and controlled strength.', Hyadum: 'Hyadum connects to the Hyades: emotional earth, body memory and rooted desire.' },
+      Gemini: { Castor: 'Castor is one twin: skill, words, movement and mental agility.', Pollux: 'Pollux is the brighter twin: confidence, vitality and expressive force.', Alhena: 'Alhena is the foot of the twin: movement, message and travel.' },
+      Cancer: { Acubens: 'Acubens is the protective shell: boundaries, home and emotional instinct.', Altarf: 'Altarf is the deep edge of Cancer: old memory and soft defense.' },
+      Leo: { Regulus: 'Regulus is the royal heart: presence, pride, leadership and being seen.', Denebola: 'Denebola is the tail: independence, rebellion and wild charisma.', Algieba: 'Algieba glows with heart fire: loyalty, love and creative courage.' },
+      Virgo: { Spica: 'Spica is Virgo’s gift star: precision, harvest, talent and useful beauty.', Porrima: 'Porrima is symmetry: analysis, mirroring and refinement.', Vindemiatrix: 'Vindemiatrix is the gatherer: timing, work and pattern recognition.' },
+      Libra: { Zubenelgenubi: 'Zubenelgenubi is the lower scale: choice, fairness and relationship karma.', Zubeneschamali: 'Zubeneschamali is the upper scale: ideals, harmony and social intelligence.' },
+      Scorpio: { Antares: 'Antares is the red heart of Scorpio: magnetism, danger, passion and transformation.', Shaula: 'Shaula is the sting: final strike, instinct and release.', Lesath: 'Lesath sharpens the tail: precision, survival and shadow truth.' },
+      Sagittarius: { Nunki: 'Nunki points beyond the map: meaning, belief, distance and destiny.', KausAustralis: 'Kaus Australis is the bow force: aim, truth and decisive movement.', Ascella: 'Ascella is the archer’s structure: mission, teaching and direction.' },
+      Capricorn: { DenebAlgedi: 'Deneb Algedi is strategy under pressure: legacy, discipline and long climb.', Dabih: 'Dabih is the trial star: endurance, tests and maturity.', Algedi: 'Algedi is the goat gate: ambition and ancient patience.' },
+      Aquarius: { Sadalsuud: 'Sadalsuud is the luck current: groups, future systems and strange blessing.', Sadalmelik: 'Sadalmelik is future leadership: network, invention and outsider signal.', Skat: 'Skat carries flow: distribution, water, information and movement.' },
+      Pisces: { Alrescha: 'Alrescha ties the two fish: soul bonds, intuition and invisible connection.', Fumalsamakah: 'Fumalsamakah is soft dream-water: empathy, fog and spiritual pull.', Revati: 'Revati is the safe passage star: guidance, completion and compassion.' }
+    };
+    let targetX = 0, targetY = 0, currentX = 0, currentY = 0;
+    let povRoll = 0;
+    let dragging = false, lastX = 0, lastY = 0, time = 0;
+    let ellipseScroll = true;
+    let ellipseAngle = 0;
+    let viewLocked = false;
+    const focusVector = new THREE.Vector3();
+    const tempWorld = new THREE.Vector3();
+
+    initSky();
+    animateSky();
+
+    function initSky() {
+      scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x00030a, 0.00042);
+
+      camera = new THREE.PerspectiveCamera(82, window.innerWidth / window.innerHeight, 0.1, 3000);
+      camera.position.set(0, 0, 0.01);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 0.96;
+      mount.appendChild(renderer.domElement);
+
+      buildStarDome();
+      buildDeepDust();
+      buildConstellationLayer();
+      buildFullSphereConstellationShell();
+      buildCelestialGrid();
+      raycaster = new THREE.Raycaster();
+      pointer = new THREE.Vector2();
+      setupInput();
+    }
+
+    function makeStarTexture(size = 96) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      const gradient = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+      gradient.addColorStop(0, 'rgba(255,255,255,1)');
+      gradient.addColorStop(0.18, 'rgba(210,235,255,.86)');
+      gradient.addColorStop(0.46, 'rgba(88,165,255,.24)');
+      gradient.addColorStop(1, 'rgba(0,0,0,0)');
+
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, size, size);
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    function buildStarDome() {
+      const count = 11500;
+      const radius = 680;
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+
+      for (let i = 0; i < count; i++) {
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos((Math.random() * 2) - 1);
+        const r = radius + Math.random() * 160;
+
+        positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+        positions[i * 3 + 1] = r * Math.cos(phi);
+        positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+
+        const brightness = 0.23 + Math.random() * 0.60;
+        colors[i * 3] = brightness * 0.62;
+        colors[i * 3 + 1] = brightness * 0.78;
+        colors[i * 3 + 2] = brightness;
+      }
+
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+      starDome = new THREE.Points(geometry, new THREE.PointsMaterial({
+        size: 1.05,
+        map: makeStarTexture(48),
+        vertexColors: true,
+        transparent: true,
+        opacity: .82,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        sizeAttenuation: true
+      }));
+
+      scene.add(starDome);
+    }
+
+    function buildDeepDust() {
+      const count = 5200;
+      const geometry = new THREE.BufferGeometry();
+      const positions = new Float32Array(count * 3);
+      const colors = new Float32Array(count * 3);
+      const radius = 620;
+
+      for (let i = 0; i < count; i++) {
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.PI / 2 + (Math.random() - 0.5) * 0.50 + Math.sin(theta * 2.0) * 0.14;
+        const r = radius + Math.random() * 170;
+
+        positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+        positions[i * 3 + 1] = r * Math.cos(phi) + Math.sin(theta * 1.4) * 34;
+        positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+
+        const b = 0.08 + Math.random() * 0.22;
+        colors[i * 3] = b * 0.40;
+        colors[i * 3 + 1] = b * 0.62;
+        colors[i * 3 + 2] = b;
+      }
+
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+      geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+      deepDust = new THREE.Points(geometry, new THREE.PointsMaterial({
+        size: 1.8,
+        map: makeStarTexture(40),
+        vertexColors: true,
+        transparent: true,
+        opacity: .36,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        sizeAttenuation: true
+      }));
+
+      deepDust.rotation.z = -0.35;
+      scene.add(deepDust);
+    }
+
+    function skyPoint(x, y, z = -240) {
+      return new THREE.Vector3(x, y, z);
+    }
+
+    function makeLabel(text, scale = 18) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 128;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.font = '700 34px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(95,180,255,.88)';
+      ctx.shadowBlur = 20;
+      ctx.fillStyle = 'rgba(225,242,255,.86)';
+      ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      const material = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0, blending: THREE.AdditiveBlending });
+      const sprite = new THREE.Sprite(material);
+      sprite.scale.set(scale, scale * 0.25, 1);
+      sprite.userData.isNameLabel = true;
+      return sprite;
+    }
+
+    function makeGlowSprite(scale = 60) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+      const g = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+      g.addColorStop(0, 'rgba(90,190,255,.55)');
+      g.addColorStop(.34, 'rgba(90,190,255,.20)');
+      g.addColorStop(.72, 'rgba(90,190,255,.055)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, 256, 256);
+      const texture = new THREE.CanvasTexture(canvas);
+      const material = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+      const sprite = new THREE.Sprite(material);
+      sprite.scale.set(scale, scale, 1);
+      sprite.userData.isGlow = true;
+      return sprite;
+    }
+
+    function makeRGBGlowTexture(size = 256) {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      const red = ctx.createRadialGradient(size*.38, size*.42, 0, size*.38, size*.42, size*.38);
+      red.addColorStop(0, 'rgba(255,60,60,.92)'); red.addColorStop(1, 'rgba(255,60,60,0)');
+      ctx.fillStyle = red; ctx.fillRect(0,0,size,size);
+      const green = ctx.createRadialGradient(size*.62, size*.42, 0, size*.62, size*.42, size*.38);
+      green.addColorStop(0, 'rgba(60,255,125,.9)'); green.addColorStop(1, 'rgba(60,255,125,0)');
+      ctx.fillStyle = green; ctx.fillRect(0,0,size,size);
+      const blue = ctx.createRadialGradient(size*.50, size*.64, 0, size*.50, size*.64, size*.44);
+      blue.addColorStop(0, 'rgba(90,160,255,.95)'); blue.addColorStop(1, 'rgba(90,160,255,0)');
+      ctx.fillStyle = blue; ctx.fillRect(0,0,size,size);
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    function makeRGBGlowSprite(scale = 34) {
+      const material = new THREE.SpriteMaterial({ map: makeRGBGlowTexture(), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false });
+      const sprite = new THREE.Sprite(material);
+      sprite.scale.set(scale, scale, 1);
+      sprite.userData.isRGBGlow = true;
+      return sprite;
+    }
+
+    function makeStarLabel(text) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 128;
+      const ctx = canvas.getContext('2d');
+      ctx.font = '700 30px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(120,210,255,.9)';
+      ctx.shadowBlur = 18;
+      ctx.fillStyle = 'rgba(240,248,255,.96)';
+      ctx.fillText(text, 256, 64);
+      const texture = new THREE.CanvasTexture(canvas);
+      const material = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: 0, blending: THREE.AdditiveBlending });
+      const sprite = new THREE.Sprite(material);
+      sprite.scale.set(18, 4.8, 1);
+      sprite.userData.isStarLabel = true;
+      return sprite;
+    }
+
+    function createCssMarker(id, labelText) {
+      if (!cssCamera) return null;
+      const marker = document.createElement('span');
+      marker.id = `marker-${String(id).replace(/[^a-z0-9_-]/gi, '-')}`;
+      marker.className = 'marker';
+      marker.innerHTML = `<span class="name">${labelText}</span>`;
+      cssCamera.appendChild(marker);
+      return marker;
+    }
+
+    function registerStarTarget(parentGroup, starName, constellationName, position, radius = 8) {
+      const hit = new THREE.Mesh(new THREE.SphereGeometry(radius, 16, 10), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
+      hit.position.copy(position);
+      hit.userData.isStarTarget = true;
+      hit.userData.starName = starName;
+      hit.userData.constellationName = constellationName;
+      hit.userData.parentConstellation = parentGroup;
+      const glow = makeRGBGlowSprite(28);
+      glow.position.copy(position);
+      parentGroup.add(glow);
+      hit.userData.glow = glow;
+      const label = makeStarLabel(starName);
+      label.position.set(position.x, position.y - 10, position.z);
+      parentGroup.add(label);
+      hit.userData.label = label;
+      hit.userData.domMarker = createCssMarker(`${constellationName}-${starName}`, starName);
+      parentGroup.add(hit);
+      starTargets.push(hit);
+      cssStarMarkers.push(hit);
+      return hit;
+    }
+
+    function registerConstellationTarget(group, name, center = null, radius = 52, meta = {}) {
+      const hitGeometry = new THREE.SphereGeometry(radius, 24, 16);
+      const hitMaterial = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
+      const hit = new THREE.Mesh(hitGeometry, hitMaterial);
+      group.userData.yaw = meta.yaw ?? group.userData.yaw ?? 0;
+      group.userData.pitch = meta.pitch ?? group.userData.pitch ?? 0;
+      hit.userData.hitTarget = true;
+      hit.userData.constellationGroup = group;
+      hit.userData.constellationName = name;
+      hit.userData.yaw = meta.yaw ?? group.userData.yaw ?? 0;
+      hit.userData.pitch = meta.pitch ?? group.userData.pitch ?? 0;
+      hit.userData.isZodiac = Boolean(ZODIAC_INFO[name]);
+      if (center) hit.position.copy(center);
+      group.add(hit);
+      group.userData.constellationName = name;
+      group.userData.yaw = hit.userData.yaw;
+      group.userData.pitch = hit.userData.pitch;
+      group.userData.isZodiac = hit.userData.isZodiac;
+      constellationTargets.push(hit);
+      if (hit.userData.isZodiac) zodiacHitByName.set(name.toLowerCase(), hit);
+      return hit;
+    }
+
+    function setConstellationActive(group, active) {
+      if (!group) return;
+      group.userData.activeGlow = active;
+      group.traverse(child => {
+        if (child.userData.hitTarget) return;
+        if (child.userData.isNameLabel) {
+          child.material.opacity = active ? .88 : 0;
+          return;
+        }
+        if (child.userData.isGlow) {
+          child.material.opacity = active ? .72 : 0;
+          return;
+        }
+        if (child.userData.isRGBGlow) {
+          child.material.opacity = active ? .88 : 0;
+          return;
+        }
+        if (child.isLine && child.material) {
+          child.material.opacity = active ? 1 : (child.userData.baseOpacity ?? .56);
+          child.material.color.set(active ? 0xffffff : (child.userData.baseColor ?? 0x5aaeea));
+          return;
+        }
+        if (child.isPoints && child.material) {
+          child.material.opacity = active ? 1 : (child.userData.baseOpacity ?? .74);
+          child.material.size = active ? (child.userData.baseSize ?? 2.7) * 2.05 : (child.userData.baseSize ?? 2.7);
+        }
+      });
+    }
+
+    function pulseActiveConstellation(group, t) {
+      if (!group || !group.userData.activeGlow) return;
+      const hueBase = (t * .20) % 1;
+      group.traverse(child => {
+        if (child.isLine && child.material) {
+          child.material.color.setHSL((hueBase + (child.id % 12) * .083) % 1, 1, .62);
+          child.material.opacity = .82 + Math.sin(t * 3.2 + child.id) * .16;
+        }
+        if (child.isPoints && child.material) {
+          child.material.size = (child.userData.baseSize ?? 3) * (1.45 + Math.sin(t * 5.2 + child.id) * .18);
+          child.material.opacity = .92 + Math.sin(t * 2.8 + child.id) * .08;
+        }
+        if (child.userData?.isRGBGlow && child.material) {
+          child.material.opacity = .58 + Math.sin(t * 4.8 + child.id) * .22;
+          child.material.rotation += .018;
+        }
+        if (child.userData?.isGlow && child.material) {
+          child.material.opacity = .48 + Math.sin(t * 3.6 + child.id) * .16;
+        }
+      });
+    }
+
+    function addConstellation(group, name, points, pairs, labelPosition, zOffset = 0) {
+      const starGeometry = new THREE.BufferGeometry();
+      const starPositions = new Float32Array(points.length * 3);
+      const starColors = new Float32Array(points.length * 3);
+
+      points.forEach((p, i) => {
+        starPositions[i * 3] = p[0];
+        starPositions[i * 3 + 1] = p[1];
+        starPositions[i * 3 + 2] = p[2] + zOffset;
+        starColors[i * 3] = 0.55;
+        starColors[i * 3 + 1] = 0.78;
+        starColors[i * 3 + 2] = 1.0;
+      });
+
+      starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+      starGeometry.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+      const starPoints = new THREE.Points(starGeometry, new THREE.PointsMaterial({
+        size: 2.7,
+        map: makeStarTexture(64),
+        vertexColors: true,
+        transparent: true,
+        opacity: .78,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        sizeAttenuation: true
+      }));
+      starPoints.userData.baseSize = 2.7;
+      starPoints.userData.baseOpacity = .78;
+      group.add(starPoints);
+
+      const lineMaterial = new THREE.LineBasicMaterial({
+        color: 0x5aaeea,
+        transparent: true,
+        opacity: .72
+      });
+
+      pairs.forEach(([a, b]) => {
+        const geometry = new THREE.BufferGeometry().setFromPoints([
+          skyPoint(points[a][0], points[a][1], points[a][2] + zOffset),
+          skyPoint(points[b][0], points[b][1], points[b][2] + zOffset)
+        ]);
+        const line = new THREE.Line(geometry, lineMaterial.clone());
+        line.userData.baseOpacity = lineMaterial.opacity;
+        line.userData.baseColor = 0x5aaeea;
+        group.add(line);
+      });
+
+      const label = makeLabel(name, name.length > 12 ? 22 : 18);
+      label.position.set(labelPosition[0], labelPosition[1], labelPosition[2] + zOffset);
+      group.add(label);
+
+      const center = new THREE.Vector3(labelPosition[0], labelPosition[1], labelPosition[2] + zOffset);
+      const glow = makeGlowSprite(name.length > 12 ? 140 : 105);
+      glow.position.copy(center);
+      group.add(glow);
+      registerConstellationTarget(group, name, center, name.length > 12 ? 88 : 68);
+    }
+
+    function addObjectLabel(text, x, y, z, color = 'rgba(230,200,230,.80)') {
+      const canvas = document.createElement('canvas');
+      canvas.width = 420;
+      canvas.height = 110;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.font = '700 30px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(255,160,230,.8)';
+      ctx.shadowBlur = 12;
+      ctx.fillStyle = color;
+      ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+      const texture = new THREE.CanvasTexture(canvas);
+      const material = new THREE.SpriteMaterial({ map: texture, transparent: true, opacity: .86, blending: THREE.AdditiveBlending });
+      const sprite = new THREE.Sprite(material);
+      sprite.position.set(x, y, z);
+      sprite.scale.set(20, 5.2, 1);
+      labelLayer.add(sprite);
+    }
+
+    function buildConstellationLayer() {
+      constellationLayer = new THREE.Group();
+      labelLayer = new THREE.Group();
+
+      addConstellation(
+        constellationLayer,
+        'Cepheus',
+        [
+          [34, 86, -250], [92, 106, -250], [124, 62, -250],
+          [58, 42, -250], [-18, 56, -250], [20, 92, -250]
+        ],
+        [[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[0,3]],
+        [56, 72, -250]
+      );
+
+      addConstellation(
+        constellationLayer,
+        'Cassiopeia',
+        [
+          [-3, -18, -238], [36, -28, -238], [62, -6, -238],
+          [88, -20, -238], [96, 28, -238]
+        ],
+        [[0,1],[1,2],[2,3],[3,4]],
+        [52, -10, -238]
+      );
+
+      addConstellation(
+        constellationLayer,
+        'Camelopardalis',
+        [
+          [-136, 18, -246], [-92, -18, -246], [-78, -82, -246],
+          [-118, -38, -246], [-160, -24, -246], [-118, 22, -246]
+        ],
+        [[0,1],[1,2],[1,3],[3,4],[4,5],[5,0]],
+        [-112, -20, -246]
+      );
+
+      addConstellation(
+        constellationLayer,
+        'Andromeda',
+        [
+          [76, -132, -258], [132, -130, -258], [194, -124, -258],
+          [250, -116, -258], [292, -96, -258]
+        ],
+        [[0,1],[1,2],[2,3],[3,4]],
+        [230, -98, -258]
+      );
+
+      addConstellation(
+        constellationLayer,
+        'Ursa Minor',
+        [
+          [-92, 158, -265], [-76, 120, -265], [-80, 80, -265],
+          [-96, 52, -265], [-128, 72, -265], [-146, 112, -265]
+        ],
+        [[0,1],[1,2],[2,3],[3,4],[4,5]],
+        [-92, 58, -265]
+      );
+
+      addObjectLabel('Polaris', -92, 50, -262, 'rgba(210,225,240,.56)');
+      addObjectLabel('M76', 70, -72, -235, 'rgba(255,190,230,.86)');
+      addObjectLabel('Little Dumbbell', 78, -86, -235, 'rgba(215,190,215,.60)');
+
+      scene.add(constellationLayer);
+      scene.add(labelLayer);
+    }
+
+    function makeSpherePoint(yawDeg, pitchDeg, radius = 430) {
+      const yaw = THREE.MathUtils.degToRad(yawDeg);
+      const pitch = THREE.MathUtils.degToRad(pitchDeg);
+      return new THREE.Vector3(
+        radius * Math.cos(pitch) * Math.sin(yaw),
+        radius * Math.sin(pitch),
+        -radius * Math.cos(pitch) * Math.cos(yaw)
+      );
+    }
+
+    function makeConstellationPatch(name, yaw, pitch, scale = 1, shape = 'zigzag') {
+      const group = new THREE.Group();
+      const center = makeSpherePoint(yaw, pitch, 430);
+      group.position.copy(center);
+      group.lookAt(0, 0, 0);
+      group.rotateY(Math.PI);
+
+      const zodiacShapes = {
+        Aries: { pts: [[-46,18,0],[0,20,0],[22,-18,0],[18,-40,0]], names: ['Hamal','Sheratan','Mesarthim','Botein'] },
+        Taurus: { pts: [[-64,36,0],[-26,12,0],[-8,2,0],[6,-8,0],[22,-18,0],[54,-34,0],[-8,46,0]], names: ['Elnath','Aldebaran','Hyadum','Theta Tauri','Zeta Tauri','Tianguan','Alcyone'] },
+        Gemini: { pts: [[-54,42,0],[-18,28,0],[16,44,0],[44,18,0],[18,0,0],[-22,-14,0],[-48,12,0],[52,-18,0],[10,-36,0]], names: ['Castor','Tejat','Pollux','Wasat','Mebsuta','Alhena','Mekbuda','Kappa Gem','Propus'] },
+        Cancer: { pts: [[0,62,0],[0,18,0],[-38,-10,0],[36,-16,0],[-8,-48,0]], names: ['Iota Cnc','Asellus Borealis','Acubens','Altarf','Asellus Australis'] },
+        Leo: { pts: [[-70,-26,0],[-38,2,0],[-10,6,0],[18,4,0],[44,24,0],[62,10,0],[22,-34,0],[-24,-30,0]], names: ['Regulus','Eta Leo','Algieba','Zosma','Chertan','Denebola','Rho Leo','Subra'] },
+        Virgo: { pts: [[-44,54,0],[-26,8,0],[-46,-42,0],[-8,-6,0],[28,-2,0],[52,22,0],[58,-30,0],[18,-52,0]], names: ['Vindemiatrix','Porrima','Spica','Zavijava','Auva','Minelauva','Heze','Syrma'] },
+        Libra: { pts: [[-46,18,0],[0,50,0],[46,18,0],[52,-20,0],[28,-32,0],[-26,-22,0]], names: ['Zubenelgenubi','Zubeneschamali','Brachium','Upsilon Lib','Tau Lib','Sigma Lib'] },
+        Scorpio: { pts: [[48,54,0],[28,28,0],[10,10,0],[-10,-10,0],[-14,-44,0],[-36,-58,0],[-58,-44,0],[-52,-18,0],[-34,-6,0],[4,52,0],[36,70,0]], names: ['Acrab','Dschubba','Antares','Sargas','Shaula','Lesath','Girtab','Epsilon Sco','Tau Sco','Jabbah','Graffias'] },
+        Sagittarius: { pts: [[-62,30,0],[-34,22,0],[-10,8,0],[10,22,0],[38,54,0],[30,0,0],[58,10,0],[18,-28,0],[-24,-44,0],[-52,-26,0]], names: ['Kaus Borealis','Kaus Media','Nunki','Phi Sgr','Albaldah','Kaus Australis','Ascella','Tau Sgr','Rukbat','Arkab'] },
+        Capricorn: { pts: [[-70,-8,0],[-42,-18,0],[-18,-36,0],[12,-42,0],[42,-30,0],[60,28,0],[18,10,0],[-12,4,0],[-52,2,0]], names: ['Algedi','Dabih','Nashira','Deneb Algedi','Psi Cap','Omega Cap','Theta Cap','Iota Cap','Rho Cap'] },
+        Aquarius: { pts: [[-64,-18,0],[-34,-2,0],[-8,22,0],[18,20,0],[38,4,0],[62,-30,0],[14,-18,0],[-22,-36,0]], names: ['Sadalmelik','Sadalsuud','Ancha','Skat','Albali','Hydor','Lambda Aqr','Phi Aqr'] },
+        Pisces: { pts: [[-54,58,0],[-38,30,0],[-22,6,0],[-24,-46,0],[0,-58,0],[28,-36,0],[50,-12,0],[70,10,0],[52,28,0],[28,32,0],[10,18,0]], names: ['Fumalsamakah','Torcular','Alrescha','Omega Psc','Revati','Eta Psc','Gamma Psc','Theta Psc','Iota Psc','Omicron Psc','Delta Psc'] }
+      };
+
+      let points;
+      let starNames;
+      if (zodiacShapes[name]) {
+        points = zodiacShapes[name].pts;
+        starNames = zodiacShapes[name].names;
+      } else if (shape === 'box') {
+        points = [[-38,18,0],[20,32,0],[58,-4,0],[8,-28,0],[-52,-18,0],[-22,28,0]];
+        starNames = points.map((_, i) => `${name} ${i + 1}`);
+      } else if (shape === 'w') {
+        points = [[-58,0,0],[-26,-16,0],[0,8,0],[28,-8,0],[54,18,0]];
+        starNames = points.map((_, i) => `${name} ${i + 1}`);
+      } else if (shape === 'line') {
+        points = [[-64,-20,0],[-30,-5,0],[0,10,0],[34,4,0],[66,26,0]];
+        starNames = points.map((_, i) => `${name} ${i + 1}`);
+      } else {
+        points = [[-54,20,0],[-20,36,0],[8,6,0],[42,24,0],[56,-18,0],[12,-34,0],[-32,-22,0]];
+        starNames = points.map((_, i) => `${name} ${i + 1}`);
+      }
+
+      const pairs = [];
+      for (let i = 0; i < points.length - 1; i++) pairs.push([i, i + 1]);
+      if (shape === 'box' && !zodiacShapes[name]) pairs.push([points.length - 1, 0], [1, 3]);
+      if (['Leo','Sagittarius','Capricorn','Pisces','Gemini','Scorpio'].includes(name)) pairs.push([0, points.length - 1]);
+
+      const starGeometry = new THREE.BufferGeometry();
+      const starPositions = new Float32Array(points.length * 3);
+      const starColors = new Float32Array(points.length * 3);
+      points.forEach((p, i) => {
+        starPositions[i * 3] = p[0] * scale;
+        starPositions[i * 3 + 1] = p[1] * scale;
+        starPositions[i * 3 + 2] = p[2];
+        starColors[i * 3] = .70;
+        starColors[i * 3 + 1] = .86;
+        starColors[i * 3 + 2] = 1;
+      });
+      starGeometry.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
+      starGeometry.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+      const patchStars = new THREE.Points(starGeometry, new THREE.PointsMaterial({
+        size: 3.2,
+        map: makeStarTexture(64),
+        vertexColors: true,
+        transparent: true,
+        opacity: .86,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        sizeAttenuation: true
+      }));
+      patchStars.userData.baseSize = 3.2;
+      patchStars.userData.baseOpacity = .86;
+      group.add(patchStars);
+
+      const lineMaterial = new THREE.LineBasicMaterial({ color: 0x5aaeea, transparent: true, opacity: .62 });
+      pairs.forEach(([a, b]) => {
+        const geometry = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3(points[a][0] * scale, points[a][1] * scale, points[a][2]),
+          new THREE.Vector3(points[b][0] * scale, points[b][1] * scale, points[b][2])
+        ]);
+        const line = new THREE.Line(geometry, lineMaterial.clone());
+        line.userData.baseOpacity = .62;
+        line.userData.baseColor = 0x5aaeea;
+        group.add(line);
+      });
+
+      const label = makeLabel(name, name.length > 10 ? 18 : 15);
+      label.position.set(0, -58 * scale, 0);
+      group.add(label);
+
+      const glow = makeGlowSprite((name.length > 10 ? 140 : 110) * scale);
+      glow.position.set(0, 0, -2);
+      group.add(glow);
+
+      registerConstellationTarget(group, name, new THREE.Vector3(0, 0, 0), 80 * scale, { yaw, pitch });
+
+      points.forEach((p, i) => registerStarTarget(
+        group,
+        starNames[i] || `${name} Star ${i + 1}`,
+        name,
+        new THREE.Vector3(p[0] * scale, p[1] * scale, 0),
+        7 * scale
+      ));
+
+      return group;
+    }
+
+    function buildFullSphereConstellationShell() {
+      sphereConstellationShell = new THREE.Group();
+
+      const patches = [
+        // all 12 zodiac constellations placed around the sphere in ecliptic order
+        ['Aries', 0, 6, .92, 'line'],
+        ['Taurus', 30, 10, .94, 'box'],
+        ['Gemini', 60, 7, .94, 'line'],
+        ['Cancer', 90, 2, .88, 'w'],
+        ['Leo', 120, -5, .96, 'zigzag'],
+        ['Virgo', 150, -11, .98, 'line'],
+        ['Libra', 180, -12, .92, 'box'],
+        ['Scorpio', 210, -16, .98, 'zigzag'],
+        ['Sagittarius', 240, -20, .98, 'box'],
+        ['Capricorn', 270, -15, .94, 'zigzag'],
+        ['Aquarius', 300, -8, .96, 'line'],
+        ['Pisces', 330, 0, .96, 'w'],
+
+        // extra sky context, softer and behind the zodiac band
+        ['Draco', -150, 42, .75, 'zigzag'], ['Lyra', -95, 62, .58, 'box'],
+        ['Cygnus', -40, 58, .70, 'line'], ['Pegasus', 52, 45, .82, 'box'],
+        ['Perseus', 118, 24, .70, 'zigzag'], ['Auriga', 168, 34, .64, 'box']
+      ];
+
+      patches.forEach(args => sphereConstellationShell.add(makeConstellationPatch(...args)));
+      scene.add(sphereConstellationShell);
+    }
+
+    function buildCelestialGrid() {
+      celestialGrid = new THREE.Group();
+      const material = new THREE.LineBasicMaterial({ color: 0x2f8bd8, transparent: true, opacity: .12 });
+      const radius = 455;
+
+      for (let lat = -60; lat <= 60; lat += 30) {
+        const pts = [];
+        for (let lon = 0; lon <= 360; lon += 4) pts.push(makeSpherePoint(lon, lat, radius));
+        celestialGrid.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), material));
+      }
+
+      for (let lon = 0; lon < 360; lon += 30) {
+        const pts = [];
+        for (let lat = -80; lat <= 80; lat += 4) pts.push(makeSpherePoint(lon, lat, radius));
+        celestialGrid.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), material));
+      }
+
+      scene.add(celestialGrid);
+    }
+
+    function setupInput() {
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      window.addEventListener('pointerdown', event => {
+        if (viewLocked || event.target.closest('button, input')) return;
+        dragging = true;
+        lastX = event.clientX;
+        lastY = event.clientY;
+      });
+
+      window.addEventListener('pointermove', event => {
+        updatePointer(event);
+        if (viewLocked) return;
+        if (dragging) {
+          targetY += (event.clientX - lastX) * 0.0085;
+          targetX += (event.clientY - lastY) * 0.0065;
+          lastX = event.clientX;
+          lastY = event.clientY;
+        } else {
+          targetY += ((event.clientX / window.innerWidth - 0.5) * 1.18 - targetY) * 0.022;
+          targetX += ((event.clientY / window.innerHeight - 0.5) * 0.72 - targetX) * 0.022;
+        }
+      });
+
+      window.addEventListener('pointerup', event => {
+        dragging = false;
+        updatePointer(event);
+        if (viewLocked) return;
+        raycaster.setFromCamera(pointer, camera);
+        const starHits = raycaster.intersectObjects(starTargets, true);
+        if (starHits.length) {
+          focusStar(starHits[0].object);
+          return;
+        }
+
+        const hit = pickConstellation();
+        if (hit) {
+          if (pinnedTarget && pinnedTarget !== hit.userData.constellationGroup) setConstellationActive(pinnedTarget, false);
+          pinnedTarget = hit.userData.constellationGroup;
+          setConstellationActive(pinnedTarget, true);
+          showTooltip(hit.userData.constellationName, event.clientX, event.clientY);
+          focusConstellation(hit);
+        }
+      });
+
+      window.addEventListener('pointerleave', () => {
+        if (hoverTarget && hoverTarget !== pinnedTarget) setConstellationActive(hoverTarget, false);
+        hoverTarget = null;
+        if (!pinnedTarget) hideTooltip();
+      });
+
+      document.getElementById('ellipseToggle').addEventListener('click', () => {
+        if (viewLocked) return;
+        ellipseScroll = !ellipseScroll;
+        document.getElementById('ellipseToggle').classList.toggle('off', !ellipseScroll);
+      });
+
+      document.getElementById('lockViewBtn').addEventListener('click', () => {
+        setViewLocked(!viewLocked);
+      });
+
+      setupZodiacSearch();
+    }
+
+    function setViewLocked(locked) {
+      viewLocked = locked;
+      dragging = false;
+      const lockBtn = document.getElementById('lockViewBtn');
+      lockBtn.classList.toggle('locked', viewLocked);
+      lockBtn.textContent = viewLocked ? 'Locked' : 'Lock view';
+      mount.style.cursor = viewLocked ? 'default' : 'grab';
+    }
+
+    function setupZodiacSearch() {
+      const input = document.getElementById('zodiacSearchInput');
+      const btn = document.getElementById('zodiacSearchBtn');
+      const box = document.getElementById('zodiacSuggestions');
+
+      box.innerHTML = zodiacNames.map(name => `<button class="zodiac-chip" data-zodiac="${name}">${name}</button>`).join('');
+
+      box.querySelectorAll('.zodiac-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          input.value = chip.dataset.zodiac;
+          searchAndZoomZodiac(chip.dataset.zodiac);
+        });
+      });
+
+      btn.addEventListener('click', () => searchAndZoomZodiac(input.value));
+      input.addEventListener('keydown', event => {
+        if (event.key === 'Enter') searchAndZoomZodiac(input.value);
+      });
+
+      input.addEventListener('input', () => {
+        const q = input.value.trim().toLowerCase();
+        box.querySelectorAll('.zodiac-chip').forEach(chip => {
+          chip.classList.toggle('active', q && chip.dataset.zodiac.toLowerCase().startsWith(q));
+        });
+      });
+    }
+
+    function normalizeZodiacQuery(value) {
+      const q = String(value || '').trim().toLowerCase();
+      if (!q) return '';
+      if (zodiacAliases[q]) return zodiacAliases[q];
+      const exact = zodiacNames.find(name => name.toLowerCase() === q);
+      if (exact) return exact;
+      const starts = zodiacNames.find(name => name.toLowerCase().startsWith(q));
+      if (starts) return starts;
+      return '';
+    }
+
+    function searchAndZoomZodiac(value) {
+      const name = normalizeZodiacQuery(value);
+      const input = document.getElementById('zodiacSearchInput');
+      if (!name) {
+        input.value = '';
+        input.placeholder = 'Not found — try Aries/Taurus...';
+        return;
+      }
+
+      input.value = name;
+      const hit = zodiacHitByName.get(name.toLowerCase());
+      if (!hit) return;
+
+      if (pinnedTarget && pinnedTarget !== hit.userData.constellationGroup) setConstellationActive(pinnedTarget, false);
+      pinnedTarget = hit.userData.constellationGroup;
+      setConstellationActive(pinnedTarget, true);
+      showTooltip(name, window.innerWidth / 2, window.innerHeight / 2);
+      focusConstellation(hit);
+      setViewLocked(true);
+
+      document.querySelectorAll('.zodiac-chip').forEach(chip => {
+        chip.classList.toggle('active', chip.dataset.zodiac === name);
+      });
+    }
+
+    function updatePointer(event) {
+      pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+      pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+      tooltip.style.left = event.clientX + 'px';
+      tooltip.style.top = event.clientY + 'px';
+    }
+
+    function pickConstellation() {
+      if (!raycaster || !pointer || !constellationTargets.length) return null;
+      raycaster.setFromCamera(pointer, camera);
+      const hits = raycaster.intersectObjects(constellationTargets, true);
+      return hits.length ? hits[0].object : null;
+    }
+
+    function showTooltip(name, x, y) {
+      tooltip.textContent = name;
+      tooltip.style.left = x + 'px';
+      tooltip.style.top = y + 'px';
+      tooltip.classList.add('show');
+    }
+
+    function hideTooltip() {
+      tooltip.classList.remove('show');
+    }
+
+    function focusConstellation(hit) {
+      const name = hit.userData.constellationName;
+      const yaw = hit.userData.yaw || 0;
+      const pitch = hit.userData.pitch || 0;
+
+      // 100% focus for our sphere math: same yaw/pitch used to place the constellation, reversed exactly.
+      targetY = -THREE.MathUtils.degToRad(yaw);
+      targetX = -THREE.MathUtils.degToRad(pitch);
+      povRoll = 0;
+      targetFov = 34;
+      ellipseScroll = false;
+      document.getElementById('ellipseToggle').classList.add('off');
+
+      if (ZODIAC_INFO[name]) {
+        const info = ZODIAC_INFO[name];
+        zodiacTitle.textContent = name;
+        zodiacText.textContent = info.text;
+        zodiacElement.textContent = info.element;
+        zodiacEnergy.textContent = info.energy;
+        zodiacMyth.textContent = info.myth;
+        zodiacPanel.classList.add('show');
+      } else {
+        zodiacTitle.textContent = name;
+        zodiacText.textContent = 'This is not one of the 12 zodiac signs, but it is part of the visible sky map. Zodiac signs open deeper SoulMap interpretation.';
+        zodiacElement.textContent = 'Sky';
+        zodiacEnergy.textContent = 'Guide';
+        zodiacMyth.textContent = 'Star lore';
+        zodiacPanel.classList.add('show');
+      }
+    }
+
+    function focusStar(hit) {
+      const starName = hit.userData.starName;
+      const constellationName = hit.userData.constellationName;
+      const starText = STAR_INFO[constellationName]?.[starName] || `${starName} is one of the visible stars in ${constellationName}. In SoulMap this point becomes a micro-signal inside the zodiac pattern.`;
+      selectedStar = hit;
+
+      const parent = hit.userData.parentConstellation;
+      if (parent?.userData) {
+        targetY = -THREE.MathUtils.degToRad(parent.userData.yaw || 0);
+        targetX = -THREE.MathUtils.degToRad(parent.userData.pitch || 0);
+      }
+      targetFov = 22;
+      povRoll = 0;
+      zodiacTitle.textContent = starName;
+      zodiacText.textContent = starText;
+      zodiacElement.textContent = constellationName;
+      zodiacEnergy.textContent = 'Star focus';
+      zodiacMyth.textContent = 'RGB glow';
+      zodiacPanel.classList.add('show');
+      if (hit.userData.glow) hit.userData.glow.material.opacity = .98;
+      if (hit.userData.label) hit.userData.label.material.opacity = 1;
+      if (hit.userData.domMarker) hit.userData.domMarker.classList.add('is-focus', 'is-visible');
+    }
+
+    document.getElementById('zodiacClose').addEventListener('click', () => {
+      zodiacPanel.classList.remove('show');
+      targetFov = 82;
+      if (selectedStar?.userData?.glow) selectedStar.userData.glow.material.opacity = 0;
+      if (selectedStar?.userData?.label) selectedStar.userData.label.material.opacity = 0;
+      if (selectedStar?.userData?.domMarker) selectedStar.userData.domMarker.classList.remove('is-focus');
+      selectedStar = null;
+    });
+
+    function updateCssStarMarkers() {
+      if (!cssCamera || !camera) return;
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const focusGroup = pinnedTarget;
+      cssStarMarkers.forEach(hit => {
+        const marker = hit.userData.domMarker;
+        if (!marker) return;
+        hit.getWorldPosition(tempWorld);
+        tempWorld.project(camera);
+        const visible = tempWorld.z > -1 && tempWorld.z < 1;
+        const x = (tempWorld.x * .5 + .5) * width;
+        const y = (-tempWorld.y * .5 + .5) * height;
+        const isActive = hit.userData.parentConstellation === focusGroup || hit === selectedStar;
+        const shouldShow = visible && isActive;
+        marker.classList.toggle('is-visible', shouldShow);
+        marker.classList.toggle('is-focus', hit === selectedStar);
+        if (shouldShow) {
+          const scale = hit === selectedStar ? 1.18 : .82;
+          marker.style.transform = `translate3d(${x.toFixed(2)}px, ${y.toFixed(2)}px, 0) scale(${scale})`;
+        }
+      });
+    }
+
+    function updateHover() {
+      const hit = pickConstellation();
+      const next = hit ? hit.userData.constellationGroup : null;
+
+      if (next !== hoverTarget) {
+        if (hoverTarget && hoverTarget !== pinnedTarget) setConstellationActive(hoverTarget, false);
+        hoverTarget = next;
+        if (hoverTarget) setConstellationActive(hoverTarget, true);
+      }
+
+      if (hit) {
+        showTooltip(hit.userData.constellationName, window.innerWidth * ((pointer.x + 1) / 2), window.innerHeight * ((1 - pointer.y) / 2));
+      } else if (!pinnedTarget) {
+        hideTooltip();
+      }
+    }
+
+    function animateSky() {
+      requestAnimationFrame(animateSky);
+      time += 0.01;
+
+      if (ellipseScroll && !dragging && !viewLocked) {
+        ellipseAngle += 0.0028;
+        targetY += 0.0035;
+        targetX += (Math.sin(ellipseAngle) * 0.34 - targetX) * 0.018;
+        povRoll = Math.sin(ellipseAngle * .7) * 0.018;
+      }
+
+      currentX += (targetX - currentX) * 0.05;
+      currentY += (targetY - currentY) * 0.05;
+      currentFov += (targetFov - currentFov) * 0.065;
+      camera.fov = currentFov;
+      camera.updateProjectionMatrix();
+
+      if (starDome) {
+        starDome.rotation.x = currentX;
+        starDome.rotation.y = currentY + time * 0.0016;
+        starDome.rotation.z = povRoll;
+      }
+
+      if (deepDust) {
+        deepDust.rotation.x = currentX * .92;
+        deepDust.rotation.y = currentY * .96 + time * 0.001;
+        deepDust.rotation.z = -0.35 + povRoll * 1.7;
+      }
+
+      if (constellationLayer) {
+        constellationLayer.rotation.x = currentX;
+        constellationLayer.rotation.y = currentY;
+        constellationLayer.rotation.z = povRoll;
+      }
+
+      if (labelLayer) {
+        labelLayer.rotation.x = currentX;
+        labelLayer.rotation.y = currentY;
+        labelLayer.rotation.z = povRoll;
+      }
+
+      if (sphereConstellationShell) {
+        sphereConstellationShell.rotation.x = currentX;
+        sphereConstellationShell.rotation.y = currentY;
+        sphereConstellationShell.rotation.z = povRoll;
+        sphereConstellationShell.traverse(child => {
+          if (child.userData?.isRGBGlow && child.material && child.material.opacity > 0) {
+            child.material.opacity = .72 + Math.sin(time * 5.4 + child.id) * .18;
+            child.material.rotation += .018;
+          }
+        });
+      }
+
+      if (celestialGrid) {
+        celestialGrid.rotation.x = currentX;
+        celestialGrid.rotation.y = currentY;
+        celestialGrid.rotation.z = povRoll;
+      }
+
+      pulseActiveConstellation(pinnedTarget, time);
+      updateCssStarMarkers();
+      updateHover();
+      renderer.render(scene, camera);
+    }
+  </script>
+</body>
+</html>

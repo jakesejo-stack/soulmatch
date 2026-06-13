@@ -1,0 +1,22 @@
+{
+  "tasks": [
+    {
+      "id": "task_1",
+      "title": "Finish 100 Echo questions",
+      "text": "Complete the full profile for deeper AI Twin probabilities.",
+      "status": "active"
+    },
+    {
+      "id": "task_2",
+      "title": "Add birth data",
+      "text": "Birth date/time powers the Soul Map.",
+      "status": "active"
+    },
+    {
+      "id": "task_3",
+      "title": "Post one live update",
+      "text": "Approved updates can become Echo memories.",
+      "status": "pending"
+    }
+  ]
+}

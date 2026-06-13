@@ -1,0 +1,1 @@
+v9 StellariumOnlyStars: EchoProfile uses Stellarium as non-interactive, cropped, blended background only. Clicks cannot open the grey Stellarium info/Wikipedia panel. Text has dreamy glow and tap sound is softer/slower.

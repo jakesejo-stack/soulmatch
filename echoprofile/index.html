@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SoulMatch EchoProfile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;700;800;900&family=Syne:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./echoprofile.css" />
+</head>
+<body>
+  <div class="stellarium-blend custom-cosmic-engine" aria-hidden="true">
+    <canvas id="cosmicEngineCanvas"></canvas>
+    <div class="engine-label" id="engineLabel">SoulSky Engine</div>
+    <div class="stellarium-soft-overlay"></div>
+  </div>
+
+  <nav class="topbar">
+    <a class="pill" href="../home/">← Home</a>
+    <div class="brand"><span>SM</span> EchoProfile</div>
+    <button class="pill ghost sound-toggle" id="soundToggle" type="button" aria-pressed="false">Sound off</button>
+    <label class="pill ghost music-upload" for="musicInput"><span id="musicLabel">Loaded chill MP3</span><input id="musicInput" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a" /></label>
+    <a class="pill ghost account-pill" href="../scheme5/">I already have an account</a>
+  </nav>
+
+  <main class="shell">
+    <section class="hero" id="introPanel">
+      <div class="kicker">First gate before login</div>
+      <h1>Build your<br />Match DNA.</h1>
+      <p>Answer fast. No perfect answers. SoulMatch uses this draft to shape your first profile before Register/Login.</p>
+      <div class="hero-actions">
+        <button id="startBtn" type="button">Start EchoProfile</button>
+        <a href="../livesky/">Open LiveSky</a>
+      </div>
+      <div class="mini-flow">Home → EchoProfile → Result → Register/Login → Discovery</div>
+    </section>
+
+    <section class="quiz-panel hidden" id="quizPanel">
+      <div class="quiz-head">
+        <div>
+          <div class="kicker" id="sectionLabel">Section</div>
+          <h2 id="questionTitle">Question</h2>
+          <p class="question-quote" id="questionQuote">Quote</p>
+        </div>
+        <div class="progress-wrap" aria-label="progress">
+          <span id="progressText">1/1</span>
+          <div class="progress"><i id="progressBar"></i></div>
+        </div>
+      </div>
+
+      <div class="scale" id="scaleBox" aria-label="answer scale"></div>
+      <div class="quiz-actions">
+        <button class="secondary" id="prevBtn" type="button">Back</button>
+        <button id="nextBtn" type="button">Next</button>
+      </div>
+    </section>
+
+    <section class="result-panel hidden" id="resultPanel">
+      <div class="kicker">Your Echo result</div>
+      <h2 id="resultType">Soul Type</h2>
+      <p id="resultSummary"></p>
+      <div class="score-grid" id="scoreGrid"></div>
+      <div class="result-actions">
+        <button class="secondary" id="retakeBtn" type="button">Retake</button>
+        <a class="primary-link" href="../scheme5/">Continue to Register/Login</a>
+      </div>
+      <p class="save-note">Saved locally as <strong>echoDraft</strong>. After registration it attaches to your account and server profile.</p>
+    </section>
+  </main>
+
+  <script src="./stellarium-blend.js"></script>
+  <script src="./echoprofile.js"></script>
+</body>
+</html>

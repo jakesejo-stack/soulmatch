@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SoulMatch / LiveSky Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=Syne:wght@700;800&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./livesky.css" />
+</head>
+<body>
+  <main class="sky-shell">
+    <section class="sky-card">
+      <header class="sky-topbar">
+        <div>
+          <p class="kicker">SoulMap / Stellarium Web Engine layer</p>
+          <h1>LiveSky Zodiac Portal</h1>
+        </div>
+        <nav class="actions">
+          <a href="../scheme3/">← Scheme 3</a>
+        </nav>
+      </header>
+
+      <div class="engine-frame-wrap">
+        <iframe
+          id="stellariumFrame"
+          title="Stellarium Web"
+          src="https://stellarium-web.org/"
+          allow="fullscreen; geolocation; accelerometer; gyroscope"
+          referrerpolicy="no-referrer-when-downgrade"
+          loading="lazy">
+        </iframe>
+
+        <div class="stellarium-clean-mask" aria-hidden="true"></div>
+
+        <aside class="soul-overlay" id="skyInfoPopup" role="dialog" aria-label="LiveSky information popup">
+          <button class="popup-close" id="skyInfoClose" type="button" aria-label="Close LiveSky information">×</button>
+          <div class="overlay-pill">Real sky simulation</div>
+          <h2>Use Stellarium tools inside</h2>
+          <p>Search stars, planets, galaxies and zodiac constellations. This view follows real time, date and location logic.</p>
+          <div class="zodiac-row" aria-label="Zodiac shortcuts">
+            <button data-search="Aries">♈ Aries</button>
+            <button data-search="Taurus">♉ Taurus</button>
+            <button data-search="Gemini">♊ Gemini</button>
+            <button data-search="Cancer">♋ Cancer</button>
+            <button data-search="Leo">♌ Leo</button>
+            <button data-search="Virgo">♍ Virgo</button>
+            <button data-search="Libra">♎ Libra</button>
+            <button data-search="Scorpius">♏ Scorpio</button>
+            <button data-search="Sagittarius">♐ Sagittarius</button>
+            <button data-search="Capricornus">♑ Capricorn</button>
+            <button data-search="Aquarius">♒ Aquarius</button>
+            <button data-search="Pisces">♓ Pisces</button>
+          </div>
+        </aside>
+
+        <button class="info-reopen" id="skyInfoReopen" type="button">✦ Info</button>
+
+      </div>
+    </section>
+  </main>
+  <script src="./livesky.js"></script>
+</body>
+</html>

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="620" viewBox="0 0 900 620">
+<defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop stop-color="hsl(344,85%,58%)"/><stop offset="1" stop-color="hsl(104,90%,28%)"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="12" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
+<rect width="900" height="620" fill="#050713"/><rect width="900" height="620" fill="url(#g)" opacity=".9"/>
+<circle cx="450" cy="245" r="126" fill="rgba(255,255,255,.28)" filter="url(#glow)"/><circle cx="450" cy="220" r="72" fill="rgba(255,255,255,.82)"/><path d="M280 565c22-126 109-190 170-190s148 64 170 190" fill="rgba(255,255,255,.82)"/>
+<text x="450" y="575" font-family="Arial, sans-serif" font-size="64" font-weight="900" text-anchor="middle" fill="white" opacity=".92">Nia 08</text>
+</svg>

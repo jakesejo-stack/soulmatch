@@ -1,0 +1,317 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; overflow: hidden; }
+    body { background: #000; color: #fff; font-family: "Inter", sans-serif; cursor: none; }
+
+    .color-controls {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      z-index: 120;
+      display: flex;
+      gap: 0.8rem;
+      pointer-events: auto;
+    }
+
+    .color-btn {
+      min-width: 48px;
+      height: 48px;
+      padding: 0.75rem 1.05rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      color: white;
+      font-family: "Syne", sans-serif;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      cursor: none;
+      transition: 0.28s ease;
+      backdrop-filter: blur(14px);
+    }
+
+    .color-btn:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-2px); }
+    .color-btn.active { background: rgba(255,255,255,0.26); border-color: rgba(255,255,255,0.62); }
+
+    .city-cont {
+      position: relative;
+      height: 100vh;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .city-slider {
+      position: relative;
+      height: 100%;
+      transform: translate3d(0, 0, 0);
+      will-change: transform;
+      cursor: all-scroll;
+      user-select: none;
+    }
+
+    .city-slider.animation,
+    .city-slider.animation .city-slide__darkbg,
+    .city-slider.animation .city-slide__text,
+    .city-slider.animation .city-slide__letter {
+      transition: transform 750ms ease-in-out;
+    }
+
+    .city-slide {
+      position: absolute;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .city-slide--1 { left: 0%; }
+    .city-slide--2 { left: 100%; }
+    .city-slide--3 { left: 200%; }
+    .city-slide--4 { left: 300%; }
+
+    .city-slide__darkbg {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      transform: translate3d(0, 0, 0);
+      will-change: transform;
+      z-index: 10;
+      background-size: cover;
+      background-position: center center;
+    }
+
+    .city-slide__darkbg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(255,255,255,0.08), transparent 36%),
+        linear-gradient(120deg, rgba(255, 60, 174, 0.16), rgba(30, 10, 80, 0.28)),
+        rgba(11, 15, 39, 0.82);
+    }
+
+    .city-slide__text-wrapper {
+      position: absolute;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      z-index: 15;
+    }
+
+    .city-slide__letter {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      transform: translate3d(0, 0, 0);
+      -webkit-text-fill-color: transparent !important;
+      -webkit-background-clip: text !important;
+      background-clip: text !important;
+      font-family: "Inter", sans-serif;
+      font-size: clamp(240px, 50vw, 780px);
+      font-weight: 900;
+      color: #000;
+      z-index: 2;
+      will-change: transform;
+      user-select: none;
+      background-size: cover;
+      background-position: center center;
+      opacity: 0.96;
+    }
+
+    .city-slide__text {
+      font-family: "Inter", sans-serif;
+      font-size: clamp(56px, 8vw, 146px);
+      font-weight: 900;
+      text-transform: uppercase;
+      transform: translate3d(0, 0, 0);
+      letter-spacing: 12px;
+      color: #fff;
+      will-change: transform;
+      user-select: none;
+      text-shadow: 0 14px 70px rgba(0,0,0,0.56);
+      margin: 0 0.08em;
+    }
+
+    .city-slide__text:nth-child(odd) { z-index: 2; }
+    .city-slide__text:nth-child(even) { z-index: 1; }
+
+    .city-nav {
+      position: absolute;
+      bottom: 25px;
+      left: 50%;
+      transform: translateX(-50%);
+      list-style-type: none;
+      z-index: 60;
+      display: flex;
+      gap: 10px;
+    }
+
+    .city-nav__slide {
+      position: relative;
+      display: inline-block;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      cursor: none;
+    }
+
+    .city-nav__slide::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0, 0);
+      width: 75%;
+      height: 75%;
+      border-radius: 50%;
+      background-color: #fff;
+      opacity: 0;
+      transition: 300ms;
+    }
+
+    .city-nav__slide:hover::after,
+    .city-nav__slide.nav-active::after {
+      transform: translate(-50%, -50%) scale(1, 1);
+      opacity: 1;
+    }
+
+    .city-side-nav {
+      position: absolute;
+      width: 10%;
+      height: 100%;
+      top: 0;
+      z-index: 55;
+      cursor: none;
+      opacity: 0;
+      transition: 300ms;
+    }
+
+    .city-side-nav:hover { opacity: 0.15; }
+    .city-side-nav--right { right: 0; background-image: linear-gradient(to right, rgba(255, 255, 255, 0) 0%, rgb(238, 215, 255) 100%); }
+    .city-side-nav--left { left: 0; background-image: linear-gradient(to left, rgba(255, 255, 255, 0) 0%, rgb(238, 215, 255) 100%); }
+
+    .city-hint {
+      position: fixed;
+      left: 2rem;
+      bottom: 2rem;
+      z-index: 70;
+      color: rgba(255,255,255,0.72);
+      font-family: "Space Grotesk", sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    .custom-cursor {
+      position: fixed;
+      width: 40px;
+      height: 40px;
+      border: 2px solid white;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10000;
+      transform: translate(-50%, -50%);
+      transition: width 0.18s ease, height 0.18s ease, border-width 0.18s ease;
+      mix-blend-mode: difference;
+    }
+
+    .custom-cursor::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px;
+      height: 8px;
+      background: white;
+      border-radius: 50%;
+    }
+
+    @media (max-width: 760px) {
+      .color-controls {
+        top: auto;
+        bottom: 5.2rem;
+        right: 50%;
+        transform: translateX(50%);
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 92vw;
+      }
+
+      .city-slide__text {
+        font-size: clamp(46px, 13vw, 96px);
+        letter-spacing: 5px;
+      }
+
+      .city-slide__text-wrapper {
+        flex-direction: column;
+        gap: 0.1em;
+      }
+
+      .city-hint { display: none; }
+    }
+
+
+    /* === RESPONSIVE TYPOGRAPHY PATCH ===
+       Scales UI text smoothly across phones, tablets, laptops and large screens.
+       Uses clamp(min, fluid, max) so text never becomes too tiny or too huge. */
+    :root {
+      --sm-font-xs: clamp(10px, 0.45vw + 8.8px, 13px);
+      --sm-font-sm: clamp(12px, 0.55vw + 9.8px, 15px);
+      --sm-font-ui: clamp(12px, 0.65vw + 10px, 16px);
+      --sm-font-body: clamp(14px, 0.70vw + 11.5px, 18px);
+      --sm-font-body-lg: clamp(16px, 1vw + 12px, 22px);
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    body {
+      font-size: var(--sm-font-body);
+      line-height: 1.5;
+    }
+
+    button, input, textarea, select {
+      font-family: inherit;
+    }
+
+    p, a, button, input, textarea, label {
+      overflow-wrap: anywhere;
+    }
+
+    h1, h2, h3, .heading, .brand-title, .logo-text, .city-slide__text {
+      text-wrap: balance;
+    }
+
+
+    .color-btn {
+      font-size: var(--sm-font-ui);
+      line-height: 1.1;
+    }
+
+    .city-hint {
+      font-size: var(--sm-font-xs);
+    }
+
+    .city-slide__text {
+      letter-spacing: clamp(4px, 0.85vw, 12px);
+    }
+
+    @media (max-width: 420px) {
+      .color-btn { min-width: 42px; height: auto; min-height: 42px; padding: 0.65rem 0.85rem; }
+      .city-slide__letter { font-size: clamp(180px, 58vw, 300px); }
+      .city-slide__text { font-size: clamp(38px, 14vw, 78px); letter-spacing: 4px; }
+    }

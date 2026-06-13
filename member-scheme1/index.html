@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SoulMatch Member Main</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <link rel="stylesheet" href="./main.css" />
+</head>
+<body>
+  <div class="loader-screen" id="loader">
+    <div class="logo-reveal">
+      <div class="logo-mark"><div class="soul-logo">SM</div></div>
+      <div class="logo-text">SoulMatch</div>
+      <div class="logo-sub">Logged-in SoulMatch</div>
+    </div>
+  </div>
+
+  <main class="app" id="app">
+    <h1 class="heading">SoulMatch<span>Member Main</span></h1>
+    <footer class="footer">Member World / Scheme 1</footer>
+
+    <div class="color-controls">
+      <button class="color-btn active" data-scheme="1">Home</button>
+      <button class="color-btn" data-scheme="2">Two</button>
+      <button class="color-btn" data-scheme="3">Three</button>
+      <button class="color-btn" data-scheme="4">Four</button>
+      <button class="color-btn login-register-btn" data-scheme="5">EchoProfile</button>
+    </div>
+
+    <button class="toggle-adjuster-btn" id="toggleAdjusterBtn">Adjust Colors</button>
+
+    <div class="color-adjuster-panel" id="colorAdjusterPanel">
+      <div class="color-adjuster-header">
+        <h3 class="color-adjuster-title">Color Adjuster</h3>
+        <button class="color-adjuster-close" id="closeAdjusterBtn" aria-label="Close color adjuster">×</button>
+      </div>
+
+      <div id="colorPickers"></div>
+      <button class="export-btn" id="exportAllBtn">Export All Colors</button>
+    </div>
+
+    <div class="custom-cursor" id="customCursor"></div>
+    <div class="debug-panel" id="debugPanel"></div>
+  </main>
+  <script src="./main.js"></script>
+</body>
+</html>

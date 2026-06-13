@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SoulMap Lumina One-Time Setup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;700&family=DM+Mono:wght@300;400&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./first-entry.css" />
+  <script type="importmap">
+  { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/" } }
+  </script>
+</head>
+<body>
+  <div id="container"></div>
+  <div class="nebula-wash"></div>
+  <div class="vignette"></div>
+
+  <div id="hud" class="glass">
+    <div class="hud-title"><span class="status-dot"></span>SoulMap Lumina System</div>
+    <div class="hud-row"><span class="hud-key">FPS</span><span class="hud-val" id="fps-display">60</span></div>
+    <div class="hud-row"><span class="hud-key">Particles</span><span class="hud-val" id="node-display">18,000</span></div>
+    <div class="hud-row"><span class="hud-key">Setup Mode</span><span class="hud-val" id="mode-display">Identity Flow</span></div>
+    <div class="hud-row"><span class="hud-key">Progress</span><span class="hud-val" id="progress-display">1 / 5</span></div>
+    <div class="hud-row"><span class="hud-key">Trails</span><span class="hud-val" id="trail-display">On</span></div>
+  </div>
+
+  <div id="stats" class="glass">
+    <div class="stat-item"><div class="stat-label"><span>Identity</span><b id="identity-val">72%</b></div><div class="stat-bar"><div class="stat-fill" id="identity-fill" style="width:72%"></div></div></div>
+    <div class="stat-item"><div class="stat-label"><span>Signal</span><b id="signal-val">88%</b></div><div class="stat-bar"><div class="stat-fill" id="signal-fill" style="width:88%"></div></div></div>
+    <div class="stat-item"><div class="stat-label"><span>Match</span><b id="match-val">58%</b></div><div class="stat-bar"><div class="stat-fill" id="match-fill" style="width:58%"></div></div></div>
+  </div>
+
+  <button id="skip-btn" class="top-ghost">Skip setup</button>
+
+  <div class="center-copy">
+    <div class="center-kicker">First entry / one-time account setup</div>
+    <h1 id="step-title">SoulMap</h1>
+    <p id="step-text">Particle visualizer logic converted into a first-entry SoulMatch setup. Complete all steps once, then this page is saved for this user.</p>
+  </div>
+
+  <div class="portal-options">
+    <div class="option-orbit"></div>
+    <button class="option-planet active" data-step="0" style="--a:-90deg; --r:min(310px, 23vw); --s:68px; --color:#ff4ec2; --glow:rgba(255,78,194,.55)"><span>♑</span><em>Identity</em></button>
+    <button class="option-planet" data-step="1" style="--a:-18deg; --r:min(292px, 22vw); --s:62px; --color:#75ffb9; --glow:rgba(117,255,185,.52)"><span>☾</span><em>Photos</em></button>
+    <button class="option-planet" data-step="2" style="--a:54deg; --r:min(310px, 23vw); --s:66px; --color:#5bd4f0; --glow:rgba(91,212,240,.52)"><span>✦</span><em>Constellation</em></button>
+    <button class="option-planet" data-step="3" style="--a:126deg; --r:min(290px, 21vw); --s:60px; --color:#9a7cff; --glow:rgba(154,124,255,.52)"><span>♌</span><em>Vibe</em></button>
+    <button class="option-planet" data-step="4" style="--a:198deg; --r:min(304px, 22vw); --s:68px; --color:#ffcf5a; --glow:rgba(255,207,90,.52)"><span>♈</span><em>Match</em></button>
+  </div>
+
+  <div class="hint-line">drag to rotate 360° / click planets or next step</div>
+
+  <div id="complete-modal" class="complete-modal hidden">
+    <div class="complete-card glass">
+      <div class="complete-kicker">Setup saved</div>
+      <h2>SoulMap is ready.</h2>
+      <p>This first-entry tutorial is now saved for this user. Next login can skip this page and go straight to the app.</p>
+      <button id="enter-app-btn">Enter SoulMatch</button>
+    </div>
+  </div>
+
+  <div id="control-panel">
+    <button id="controls-toggle">☰ Controls</button>
+    <div class="toggle-group glass">
+      <div class="toggle-pill active" id="flow-pill"><div class="pill-dot"></div>Flow</div>
+      <div class="toggle-pill active" id="trails-pill"><div class="pill-dot"></div>Trails</div>
+      <div class="toggle-pill active" id="rotate-pill"><div class="pill-dot"></div>Rotate</div>
+    </div>
+    <div class="panel-divider"></div>
+    <button id="execute-btn">▶ Next Step</button>
+  </div>
+
+  <script type="module" src="./first-entry.js"></script>
+</body>
+</html>

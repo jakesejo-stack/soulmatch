@@ -1,0 +1,36 @@
+{
+  "memories": [
+    {
+      "id": "mem_1",
+      "range": "0-6",
+      "city": "Sliven",
+      "title": "First Echo step",
+      "text": "Registered and opened AI Twin.",
+      "status": "approved"
+    },
+    {
+      "id": "mem_2",
+      "range": "6-12",
+      "city": "Sofia",
+      "title": "City scan",
+      "text": "Checked live map and users around.",
+      "status": "approved"
+    },
+    {
+      "id": "mem_3",
+      "range": "12-23",
+      "city": "Burgas",
+      "title": "Soul Map opened",
+      "text": "Zodiac map generated from birth data.",
+      "status": "approved"
+    },
+    {
+      "id": "mem_4",
+      "range": "23-100",
+      "city": "Varna",
+      "title": "Profile growth",
+      "text": "Echo tasks and profile progress history.",
+      "status": "approved"
+    }
+  ]
+}

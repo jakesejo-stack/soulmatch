@@ -1,0 +1,13 @@
+{
+  "updates": [
+    {
+      "id": "demo_live_1",
+      "userId": "demo",
+      "city": "Sliven",
+      "text": "Live News demo: people nearby can post 24h or 7d updates here.",
+      "visibility": "24h",
+      "status": "approved",
+      "createdAt": "2026-06-07T06:00:00.000Z"
+    }
+  ]
+}
