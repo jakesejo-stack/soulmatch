@@ -497,6 +497,37 @@
   }
 
   .match-chat {
-    width: 100vw;
-  }
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: min(390px, 92vw);
+  height: 100dvh;
+  z-index: 9999;
+  transform: translateX(-110%);
+  transition: transform .35s ease;
+  background: rgba(5,7,22,.96);
+  border-right: 1px solid rgba(255,255,255,.16);
+  backdrop-filter: blur(24px);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.match-chat.open {
+  transform: translateX(0);
+}
+
+.chat-open-btn {
+  position: fixed;
+  left: 2rem;
+  bottom: 5.5rem;
+  z-index: 300;
+  padding: 14px 22px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.28);
+  background: rgba(0,0,0,.45);
+  color: white;
+  font-weight: 900;
+  backdrop-filter: blur(16px);
 }
