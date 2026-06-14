@@ -141,19 +141,24 @@ body {
   position: fixed;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -55%);
   z-index: 10;
+
+  width: 100%;
+  padding: 0 12px;
+
   color: white;
   text-align: center;
-  white-space: nowrap;
-  pointer-events: none;
+
   font-family: "Syne", sans-serif;
-  font-size: clamp(4rem, 12vw, 13rem);
+  font-size: clamp(2rem, 9vw, 8rem);
+
   font-weight: 800;
-  letter-spacing: -0.08em;
-  line-height: 0.86;
-  text-shadow: 0 0 55px rgba(255,255,255,0.16);
-  text-wrap: balance;
+  letter-spacing: -0.12em;
+  line-height: .85;
+
+  white-space: nowrap;
+  text-shadow: 0 0 55px rgba(255,255,255,.16);
 }
 
 .heading span {
