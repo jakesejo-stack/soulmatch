@@ -4,12 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SoulMatch Member Main</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <link rel="stylesheet" href="./main.css" />
 </head>
+
 <body>
   <div class="loader-screen" id="loader">
     <div class="logo-reveal">
@@ -21,7 +24,6 @@
 
   <main class="app" id="app">
     <h1 class="heading">SoulMatch<span>Member Main</span></h1>
-    <footer class="footer">Member World / Scheme 1</footer>
 
     <div class="color-controls">
       <button class="color-btn active" data-scheme="1">Home</button>
@@ -33,46 +35,48 @@
 
     <button class="toggle-adjuster-btn" id="toggleAdjusterBtn">Adjust Colors</button>
 
-  <button class="chat-open-btn" id="chatOpenBtn">💬 Matches</button>
+    <button class="chat-open-btn" id="chatOpenBtn">💬 Chat</button>
 
-<aside class="match-chat" id="matchChat">
-  <div class="chat-head">
-    <div>
-      <b>SoulMatch Chat</b>
-      <span>Matches · Messenger mode</span>
-    </div>
-    <button id="chatCloseBtn">×</button>
-  </div>
+    <aside class="match-chat" id="matchChat" aria-hidden="true">
+      <div class="chat-head">
+        <div>
+          <b>SoulMatch Chat</b>
+          <span>Matches · Messenger mode</span>
+        </div>
+        <button id="chatCloseBtn" aria-label="Close chat">×</button>
+      </div>
 
-  <div class="match-list" id="matchList">
-    <button class="match-item active" data-name="Elena" data-city="Sofia">🌙 Elena <span>98%</span></button>
-    <button class="match-item" data-name="Mira" data-city="Varna">🔥 Mira <span>94%</span></button>
-    <button class="match-item" data-name="Alex" data-city="Burgas">⭐ Alex <span>91%</span></button>
-  </div>
+      <div class="match-list" id="matchList">
+        <button class="match-item active" data-name="Elena" data-city="Sofia">🌙 Elena <span>98%</span></button>
+        <button class="match-item" data-name="Mira" data-city="Varna">🔥 Mira <span>94%</span></button>
+        <button class="match-item" data-name="Alex" data-city="Burgas">⭐ Alex <span>91%</span></button>
+      </div>
 
-  <div class="chat-box">
-    <div class="chat-person" id="chatPerson">Elena · Sofia</div>
-    <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-box">
+        <div class="chat-person" id="chatPerson">Elena · Sofia</div>
+        <div class="chat-messages" id="chatMessages"></div>
 
-    <div class="chat-tools">
-      <button data-emoji="❤️">❤️</button>
-      <button data-emoji="🔥">🔥</button>
-      <button data-emoji="😂">😂</button>
-      <button id="gifBtn">GIF</button>
-      <label class="image-btn">
-        📷
-        <input type="file" id="chatImageInput" accept="image/*" hidden>
-      </label>
-    </div>
+        <div class="chat-tools">
+          <button type="button" data-emoji="❤️">❤️</button>
+          <button type="button" data-emoji="🔥">🔥</button>
+          <button type="button" data-emoji="😂">😂</button>
+          <button type="button" id="gifBtn">GIF</button>
 
-    <div class="chat-input">
-      <input id="chatText" placeholder="Message your match..." />
-      <button id="sendChatBtn">➤</button>
-    </div>
+          <label class="image-btn">
+            📷
+            <input type="file" id="chatImageInput" accept="image/*" hidden />
+          </label>
+        </div>
 
-    <small id="imageLimitText">1 image per day</small>
-  </div>
-</aside>
+        <div class="chat-input">
+          <input id="chatText" placeholder="Message your match..." />
+          <button type="button" id="sendChatBtn">➤</button>
+        </div>
+
+        <small id="imageLimitText">1 image per day</small>
+      </div>
+    </aside>
+
     <div class="color-adjuster-panel" id="colorAdjusterPanel">
       <div class="color-adjuster-header">
         <h3 class="color-adjuster-title">Color Adjuster</h3>
@@ -83,10 +87,12 @@
       <button class="export-btn" id="exportAllBtn">Export All Colors</button>
     </div>
 
+    <footer class="footer">Member World / Scheme 1</footer>
+
     <div class="custom-cursor" id="customCursor"></div>
-    
     <div class="debug-panel" id="debugPanel"></div>
   </main>
+
   <script src="./main.js"></script>
 </body>
 </html>
