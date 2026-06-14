@@ -33,6 +33,46 @@
 
     <button class="toggle-adjuster-btn" id="toggleAdjusterBtn">Adjust Colors</button>
 
+  <button class="chat-open-btn" id="chatOpenBtn">💬 Matches</button>
+
+<aside class="match-chat" id="matchChat">
+  <div class="chat-head">
+    <div>
+      <b>SoulMatch Chat</b>
+      <span>Matches · Messenger mode</span>
+    </div>
+    <button id="chatCloseBtn">×</button>
+  </div>
+
+  <div class="match-list" id="matchList">
+    <button class="match-item active" data-name="Elena" data-city="Sofia">🌙 Elena <span>98%</span></button>
+    <button class="match-item" data-name="Mira" data-city="Varna">🔥 Mira <span>94%</span></button>
+    <button class="match-item" data-name="Alex" data-city="Burgas">⭐ Alex <span>91%</span></button>
+  </div>
+
+  <div class="chat-box">
+    <div class="chat-person" id="chatPerson">Elena · Sofia</div>
+    <div class="chat-messages" id="chatMessages"></div>
+
+    <div class="chat-tools">
+      <button data-emoji="❤️">❤️</button>
+      <button data-emoji="🔥">🔥</button>
+      <button data-emoji="😂">😂</button>
+      <button id="gifBtn">GIF</button>
+      <label class="image-btn">
+        📷
+        <input type="file" id="chatImageInput" accept="image/*" hidden>
+      </label>
+    </div>
+
+    <div class="chat-input">
+      <input id="chatText" placeholder="Message your match..." />
+      <button id="sendChatBtn">➤</button>
+    </div>
+
+    <small id="imageLimitText">1 image per day</small>
+  </div>
+</aside>
     <div class="color-adjuster-panel" id="colorAdjusterPanel">
       <div class="color-adjuster-header">
         <h3 class="color-adjuster-title">Color Adjuster</h3>
@@ -44,6 +84,7 @@
     </div>
 
     <div class="custom-cursor" id="customCursor"></div>
+    
     <div class="debug-panel" id="debugPanel"></div>
   </main>
   <script src="./main.js"></script>
