@@ -634,3 +634,33 @@ label {
     padding: 0.72rem 1rem;
   }
     }
+.color-controls {
+  max-width: 96vw;
+}
+
+.color-btn,
+.chat-open-btn {
+  font-size: clamp(10px, 3vw, 15px);
+  padding: clamp(9px, 2.4vw, 14px) clamp(12px, 3vw, 22px);
+  white-space: nowrap;
+}
+
+.chat-open-btn {
+  position: static;
+  z-index: 121;
+}
+
+@media (max-width: 760px) {
+  .color-controls {
+    bottom: 5.2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .color-btn,
+  .chat-open-btn {
+    min-height: 42px;
+    border-radius: 999px;
+  }
+}
