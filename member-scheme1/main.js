@@ -532,3 +532,134 @@
         cursor.style.borderWidth = '2px';
       });
     });
+const chatOpenBtn = document.getElementById('chatOpenBtn');
+const chatCloseBtn = document.getElementById('chatCloseBtn');
+const matchChat = document.getElementById('matchChat');
+const chatMessages = document.getElementById('chatMessages');
+const chatText = document.getElementById('chatText');
+const sendChatBtn = document.getElementById('sendChatBtn');
+const chatPerson = document.getElementById('chatPerson');
+const imageInput = document.getElementById('chatImageInput');
+const imageLimitText = document.getElementById('imageLimitText');
+
+let activeMatch = 'Elena';
+let activeCity = 'Sofia';
+
+function chatKey() {
+  return `soulmatch_chat_${activeMatch}`;
+}
+
+function imageKey() {
+  const today = new Date().toISOString().slice(0, 10);
+  return `soulmatch_image_${activeMatch}_${today}`;
+}
+
+function getChat() {
+  try {
+    return JSON.parse(localStorage.getItem(chatKey()) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function saveChat(messages) {
+  localStorage.setItem(chatKey(), JSON.stringify(messages));
+}
+
+function renderChat() {
+  const messages = getChat();
+  chatMessages.innerHTML = messages.map(m => {
+    if (m.type === 'image') {
+      return `<div class="msg me"><img src="${m.src}" alt="chat image"><small>${m.time}</small></div>`;
+    }
+    return `<div class="msg ${m.me ? 'me' : ''}">${m.text}<br><small>${m.time}</small></div>`;
+  }).join('');
+
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  const used = localStorage.getItem(imageKey()) === 'used';
+  imageLimitText.textContent = used ? 'Image limit today: 0/1' : 'Image limit today: 1/1';
+}
+
+function sendMessage(text) {
+  const value = String(text || '').trim();
+  if (!value) return;
+
+  const messages = getChat();
+  messages.push({
+    type: 'text',
+    text: value,
+    me: true,
+    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  });
+
+  saveChat(messages);
+  chatText.value = '';
+  renderChat();
+}
+
+chatOpenBtn?.addEventListener('click', () => {
+  matchChat.classList.add('open');
+  renderChat();
+});
+
+chatCloseBtn?.addEventListener('click', () => {
+  matchChat.classList.remove('open');
+});
+
+sendChatBtn?.addEventListener('click', () => sendMessage(chatText.value));
+
+chatText?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') sendMessage(chatText.value);
+});
+
+document.querySelectorAll('.match-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.match-item').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeMatch = btn.dataset.name;
+    activeCity = btn.dataset.city;
+    chatPerson.textContent = `${activeMatch} · ${activeCity}`;
+    renderChat();
+  });
+});
+
+document.querySelectorAll('.chat-tools [data-emoji]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    chatText.value += btn.dataset.emoji;
+    chatText.focus();
+  });
+});
+
+document.getElementById('gifBtn')?.addEventListener('click', () => {
+  sendMessage('https://media.giphy.com/media/26BRv0ThflsHCqDrG/giphy.gif');
+});
+
+imageInput?.addEventListener('change', () => {
+  const file = imageInput.files?.[0];
+  if (!file) return;
+
+  if (localStorage.getItem(imageKey()) === 'used') {
+    alert('Можеш да качваш само 1 снимка на ден към този match.');
+    imageInput.value = '';
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const messages = getChat();
+    messages.push({
+      type: 'image',
+      src: reader.result,
+      me: true,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    });
+
+    saveChat(messages);
+    localStorage.setItem(imageKey(), 'used');
+    imageInput.value = '';
+    renderChat();
+  };
+
+  reader.readAsDataURL(file);
+});
