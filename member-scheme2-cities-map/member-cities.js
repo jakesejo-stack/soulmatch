@@ -1,6 +1,15 @@
 "use strict";
 const cities = [
-  { name: "Sofia", img: "https://images.unsplash.com/photo-1514565131-fce0801e5785?auto=format&fit=crop&w=1800&q=85" },
+  {
+  name: "SOFIA",
+  letter: "S",
+  key: "sofia",
+  images: [
+    "../assets/cities/sofia-01.jpg",
+    "../assets/cities/sofia-02.jpg",
+    "../assets/cities/sofia-03.jpg"
+  ]
+  }
   { name: "Plovdiv", img: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=85" },
   { name: "Varna", img: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e8?auto=format&fit=crop&w=1800&q=85" },
   { name: "Burgas", img: "https://images.unsplash.com/photo-1494783367193-149034c05d0b?auto=format&fit=crop&w=1800&q=85" },
