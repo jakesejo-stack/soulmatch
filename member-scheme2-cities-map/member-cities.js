@@ -19,6 +19,15 @@ const cities = [
   { name: "Veliko Tarnovo", img: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=85" },
   { name: "Live Map", img: "https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=1800&q=85", live: true }
 ];
+function getDailyCityImage(city) {
+  if (!city.images || !city.images.length) return city.image;
+
+  const today = new Date();
+  const dayCode = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+  const index = dayCode % city.images.length;
+
+  return city.images[index];
+}
 
 const slider = document.getElementById("citySlider");
 const nav = document.getElementById("cityNav");
