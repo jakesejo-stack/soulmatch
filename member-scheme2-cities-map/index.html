@@ -16,18 +16,17 @@
   <a href="../scheme5/">5 Echo AI</a>
 </nav>
 
-<section class="city-cont" aria-label="Bulgaria city slides">
+<section class="city-cont">
   <div class="city-slider" id="citySlider"></div>
   <ul class="city-nav" id="cityNav"></ul>
   <button class="side left" id="leftBtn">‹</button>
   <button class="side right" id="rightBtn">›</button>
-  <div class="hint">Swipe / wheel / arrows · last slide opens AR Live Map</div>
+  <div class="hint">Swipe / wheel / arrows · last slide opens AR</div>
 </section>
 
 <button id="mapFloatCta" class="map-float-cta" type="button">↓ Real-time AR Map</button>
 
 <section id="liveMapSection" class="live-map-section">
-
   <div class="cube-wrap" id="cubeWrap">
     <div class="ar-cube-box" id="mapCube">
       <div class="cube-inside-screen">
@@ -37,7 +36,6 @@
         <div class="inside-dot"></div>
         <div class="inside-text">CAMERA / MAP / YOU</div>
       </div>
-
       <span class="face front">MAP</span>
       <span class="face right">LIVE</span>
       <span class="face back">POV</span>
@@ -51,8 +49,10 @@
   <div class="map-copy">
     <small>Live Map / Around You</small>
     <h1>AR POV map engine</h1>
-    <p>Use your exact private coordinates, open a real map around you, move the POV forward/back/left/right, and keep your public location approximate.</p>
+    <p>Camera AR HUD + real GPS + Google map iframe + POV movement prototype.</p>
+
     <div class="map-actions">
+      <button id="openCameraBtn" type="button">Open AR Camera</button>
       <button id="useLocationBtn" type="button">Use my real location</button>
       <button id="watchLocationBtn" type="button">Live tracking</button>
       <button id="stopWatchBtn" type="button">Stop tracking</button>
@@ -62,7 +62,8 @@
       <a id="mapsLink" target="_blank" rel="noreferrer" href="https://maps.google.com">Open Google Maps</a>
       <a id="streetViewLink" target="_blank" rel="noreferrer" href="https://maps.google.com">Open Street View POV</a>
     </div>
-    <div id="locationOutput" class="output">Location not requested yet.</div>
+
+    <div id="locationOutput" class="output">AR camera not opened yet.</div>
   </div>
 
   <div class="ar-engine" id="arEngine">
@@ -80,12 +81,19 @@
     <div class="ar-layout">
       <div class="pov-shell">
         <div class="pov-screen" id="povScreen">
+          <video id="arCameraVideo" class="ar-camera-video" autoplay playsinline muted></video>
+          <div class="camera-dark-layer"></div>
+
           <div class="pov-sky"></div>
           <div class="pov-horizon"></div>
           <div class="pov-road"></div>
           <div class="pov-grid"></div>
+
+          <div class="ar-hud-ring"></div>
           <div class="pov-pin">YOU</div>
+
           <img class="pov-avatar" id="avatarPreview" src="../assets/avatar/default-avatar.svg" alt="Your avatar preview">
+
           <div class="pov-crosshair"></div>
           <div class="pov-coords" id="povCoords">Waiting for coordinates...</div>
         </div>
@@ -109,7 +117,7 @@
 
     <form id="avatarForm" class="avatar-form">
       <h2>Own avatar</h2>
-      <p>Upload a photo or short video to appear inside the AR map view.</p>
+      <p>Upload photo/avatar for the AR HUD.</p>
       <input id="avatarFile" name="avatar" type="file" accept="image/*,video/*">
       <button type="submit">Upload avatar</button>
       <div id="avatarOutput" class="output small-output">No avatar uploaded yet.</div>
