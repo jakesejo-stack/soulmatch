@@ -35,7 +35,7 @@ window.addEventListener('load', () => {
   setTimeout(() => {
     loader?.classList.add('hide');
     appShell?.classList.add('show');
-  }, 4000);
+  }, 1200);
 });
 
 const pickerWrap = document.getElementById('colorPickers');
@@ -70,9 +70,13 @@ function getViewportSize() {
 }
 
 function createSafePlaneGeometry(width, height) {
-  const safeWidth = safeNumber(width, FALLBACK_VIEW_WIDTH);
-  const safeHeight = safeNumber(height, FALLBACK_VIEW_HEIGHT);
-  const geometry = new THREE.PlaneBufferGeometry(safeWidth, safeHeight, 1, 1);
+  const geometry = new THREE.PlaneBufferGeometry(
+    safeNumber(width, FALLBACK_VIEW_WIDTH),
+    safeNumber(height, FALLBACK_VIEW_HEIGHT),
+    1,
+    1
+  );
+
   geometry.computeBoundingSphere();
   return geometry;
 }
@@ -236,7 +240,7 @@ class LiquidApp {
     };
 
     this.initMesh();
-    this.setScheme(getInitialScheme());
+    this.setScheme(1);
     this.bind();
     this.tick();
   }
@@ -415,10 +419,6 @@ class LiquidApp {
 
 let app;
 
-function getInitialScheme() {
-  return 1;
-}
-
 function updatePickers() {
   if (!app || !app.uniforms) return;
 
@@ -435,16 +435,9 @@ function updatePickers() {
   }
 }
 
-function setActiveButton(scheme) {
-  document.querySelectorAll('.color-btn').forEach((button) => {
-    button.classList.toggle('active', Number(button.dataset.scheme) === scheme);
-  });
-}
-
 function boot() {
   try {
     app = new LiquidApp();
-    setActiveButton(getInitialScheme());
   } catch (error) {
     showDebug(`SoulMatch preview error:\n${error.message}`);
   }
@@ -537,7 +530,7 @@ document.querySelectorAll('button, input').forEach((element) => {
 });
 
 /* =========================
-   SOULMATCH REAL CHAT
+   REAL USER CHAT ONLY
    ========================= */
 
 const CHAT_SERVER = 'http://localhost:3001';
@@ -552,29 +545,153 @@ const chatPerson = document.getElementById('chatPerson');
 const imageInput = document.getElementById('chatImageInput');
 const imageLimitText = document.getElementById('imageLimitText');
 const gifBtn = document.getElementById('gifBtn');
-const aiHelpBtn = document.getElementById('aiHelpBtn');
 const chatStatus = document.getElementById('chatStatus');
 const typingStatus = document.getElementById('typingStatus');
+const matchList = document.getElementById('matchList');
+const currentUserBox = document.getElementById('currentUserBox');
+const gifPicker = document.getElementById('gifPicker');
 
 let socket = null;
 let socketReady = false;
+let selectedUser = null;
 
-const currentUserId =
-  localStorage.getItem('soulmatch_user_id') ||
-  'user_' + Math.floor(Math.random() * 999999);
-
-localStorage.setItem('soulmatch_user_id', currentUserId);
-
-let receiverId = 'user_elena';
-let activeName = 'Elena';
-let activeCity = 'Sofia';
-
-function getRoomId() {
-  return [currentUserId, receiverId].sort().join('_');
+function makeId() {
+  return 'user_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
+
+function getCurrentUser() {
+  let user = null;
+
+  try {
+    user = JSON.parse(localStorage.getItem('soulmatch_current_user') || 'null');
+  } catch {
+    user = null;
+  }
+
+  if (!user) {
+    const name =
+      localStorage.getItem('soulmatch_user_name') ||
+      localStorage.getItem('soulmatch_name') ||
+      localStorage.getItem('name') ||
+      'User ' + Math.floor(Math.random() * 9999);
+
+    user = {
+      id: localStorage.getItem('soulmatch_user_id') || makeId(),
+      name,
+      city: localStorage.getItem('soulmatch_city') || 'Soul City'
+    };
+
+    localStorage.setItem('soulmatch_current_user', JSON.stringify(user));
+    localStorage.setItem('soulmatch_user_id', user.id);
+  }
+
+  return user;
+}
+
+const currentUser = getCurrentUser();
 
 function setChatStatus(text) {
   if (chatStatus) chatStatus.textContent = text;
+}
+
+function getRoomId() {
+  if (!selectedUser) return null;
+  return [currentUser.id, selectedUser.id].sort().join('_');
+}
+
+function updateCurrentUserUI() {
+  if (!currentUserBox) return;
+
+  currentUserBox.innerHTML = `
+    Logged as: <b>${escapeHTML(currentUser.name)}</b>
+    <br>
+    <small>${escapeHTML(currentUser.id)}</small>
+  `;
+}
+
+async function registerCurrentUser() {
+  try {
+    await fetch(`${CHAT_SERVER}/users/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(currentUser)
+    });
+  } catch {
+    setChatStatus('Backend not connected');
+  }
+}
+
+async function loadRealUsers() {
+  if (!matchList) return;
+
+  try {
+    const res = await fetch(`${CHAT_SERVER}/users`);
+    const users = await res.json();
+
+    const otherUsers = users.filter((u) => u.id !== currentUser.id);
+
+    if (!otherUsers.length) {
+      matchList.innerHTML = `
+        <div class="empty-users">
+          Няма други регистрирани users още.
+          <br>
+          <small>Отвори сайта от друг телефон/browser, за да се появи втори user.</small>
+        </div>
+      `;
+      selectedUser = null;
+      if (chatPerson) chatPerson.textContent = 'Select a real user';
+      if (chatText) chatText.placeholder = 'No user selected';
+      return;
+    }
+
+    matchList.innerHTML = otherUsers.map((u, index) => `
+      <button
+        class="match-item ${index === 0 ? 'active' : ''}"
+        data-user-id="${escapeHTML(u.id)}"
+        data-name="${escapeHTML(u.name)}"
+        data-city="${escapeHTML(u.city || 'Soul City')}"
+      >
+        ${escapeHTML(u.name)}
+      </button>
+    `).join('');
+
+    selectedUser = otherUsers[0];
+    if (chatPerson) chatPerson.textContent = `${selectedUser.name} · ${selectedUser.city || 'Soul City'}`;
+    if (chatText) chatText.placeholder = `Message ${selectedUser.name}...`;
+
+    bindUserButtons();
+    loadMessages();
+  } catch {
+    matchList.innerHTML = `
+      <div class="empty-users">
+        Backend не е пуснат.
+        <br>
+        <small>Стартирай backend на localhost:3001.</small>
+      </div>
+    `;
+  }
+}
+
+function bindUserButtons() {
+  document.querySelectorAll('.match-item').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.match-item').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      selectedUser = {
+        id: btn.dataset.userId,
+        name: btn.dataset.name,
+        city: btn.dataset.city
+      };
+
+      if (chatPerson) chatPerson.textContent = `${selectedUser.name} · ${selectedUser.city}`;
+      if (chatText) chatText.placeholder = `Message ${selectedUser.name}...`;
+
+      if (gifPicker) gifPicker.classList.remove('open');
+
+      loadMessages();
+    });
+  });
 }
 
 function connectSocket() {
@@ -587,18 +704,17 @@ function connectSocket() {
     transports: ['websocket', 'polling']
   });
 
-  socket.on('connect', () => {
+  socket.on('connect', async () => {
     socketReady = true;
-    setChatStatus('Online · Real chat');
-    socket.emit('joinRoom', {
-      roomId: getRoomId(),
-      userId: currentUserId
-    });
+    setChatStatus('Online · real users only');
+
+    await registerCurrentUser();
+    await loadRealUsers();
   });
 
   socket.on('disconnect', () => {
     socketReady = false;
-    setChatStatus('Offline · backend not connected');
+    setChatStatus('Offline');
   });
 
   socket.on('connect_error', () => {
@@ -606,12 +722,22 @@ function connectSocket() {
     setChatStatus('Backend not connected');
   });
 
-  socket.on('newMessage', renderMessage);
+  socket.on('usersUpdated', () => {
+    loadRealUsers();
+  });
+
+  socket.on('newMessage', (message) => {
+    const roomId = getRoomId();
+    if (!roomId || message.roomId !== roomId) return;
+    renderMessage(message);
+  });
 
   socket.on('typing', (data) => {
-    if (!typingStatus || data.userId === currentUserId) return;
+    if (!typingStatus || !selectedUser) return;
+    if (data.userId === currentUser.id) return;
+    if (data.roomId !== getRoomId()) return;
 
-    typingStatus.textContent = `${activeName} is typing...`;
+    typingStatus.textContent = `${selectedUser.name} is typing...`;
 
     setTimeout(() => {
       typingStatus.textContent = '';
@@ -619,26 +745,31 @@ function connectSocket() {
   });
 }
 
-connectSocket();
-
 async function loadMessages() {
   if (!chatMessages) return;
 
-  chatMessages.innerHTML = `
-    <div class="msg">
-      Loading chat...
-    </div>
-  `;
+  const roomId = getRoomId();
+
+  if (!roomId) {
+    chatMessages.innerHTML = `
+      <div class="msg">
+        Няма избран реален user.
+      </div>
+    `;
+    return;
+  }
+
+  chatMessages.innerHTML = `<div class="msg">Loading chat...</div>`;
 
   if (socketReady && socket) {
     socket.emit('joinRoom', {
-      roomId: getRoomId(),
-      userId: currentUserId
+      roomId,
+      userId: currentUser.id
     });
   }
 
   try {
-    const res = await fetch(`${CHAT_SERVER}/messages/${getRoomId()}`);
+    const res = await fetch(`${CHAT_SERVER}/messages/${roomId}`);
     const data = await res.json();
 
     chatMessages.innerHTML = '';
@@ -646,41 +777,40 @@ async function loadMessages() {
     if (!data.length) {
       chatMessages.innerHTML = `
         <div class="msg">
-          Say hi to ${escapeHTML(activeName)} 👋
+          Start real chat with ${escapeHTML(selectedUser.name)} 👋
           <br>
-          <small>Real user-to-user chat room</small>
+          <small>No fake bots. No fake users.</small>
         </div>
       `;
     } else {
       data.forEach(renderMessage);
     }
-  } catch (err) {
+  } catch {
     chatMessages.innerHTML = `
       <div class="msg">
         Backend не е пуснат още.
         <br>
-        <small>Пусни backend/server.js на localhost:3001</small>
+        <small>Пусни backend/server.js на localhost:3001.</small>
       </div>
     `;
   }
 
   if (imageLimitText) {
-    imageLimitText.textContent = 'Images, files, GIFs and AI helper ready';
+    imageLimitText.textContent = 'User-to-user chat · files · GIF picker';
   }
 }
 
 function renderMessage(m) {
   if (!chatMessages || !m) return;
 
-  const side = m.senderId === currentUserId ? 'me' : '';
-  const aiClass = m.senderId === 'ai_assistant' ? 'ai' : '';
+  const side = m.senderId === currentUser.id ? 'me' : '';
   const time = m.createdAt
     ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     : '';
 
   if (m.fileUrl) {
     chatMessages.insertAdjacentHTML('beforeend', `
-      <div class="msg ${side} ${aiClass}">
+      <div class="msg ${side}">
         ${
           m.fileType && m.fileType.startsWith('image')
             ? `<img src="${escapeHTML(m.fileUrl)}" alt="chat image">`
@@ -691,7 +821,7 @@ function renderMessage(m) {
     `);
   } else {
     chatMessages.insertAdjacentHTML('beforeend', `
-      <div class="msg ${side} ${aiClass}">
+      <div class="msg ${side}">
         ${escapeHTML(m.text)}
         <small>${escapeHTML(time)}</small>
       </div>
@@ -701,129 +831,31 @@ function renderMessage(m) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-function sendMessage(textOverride) {
-  const text = String(textOverride ?? chatText?.value ?? '').trim();
-  if (!text) return;
+function sendMessage() {
+  const text = String(chatText?.value || '').trim();
 
-  if (receiverId === 'ai_assistant') {
-    sendLocalAI(text);
-    if (chatText) chatText.value = '';
-    return;
-  }
+  if (!text || !selectedUser) return;
 
   if (!socketReady || !socket) {
-    alert('Backend не е пуснат. Първо стартирай server.js.');
+    alert('Backend не е пуснат.');
     return;
   }
 
   socket.emit('sendMessage', {
     roomId: getRoomId(),
-    senderId: currentUserId,
-    receiverId,
+    senderId: currentUser.id,
+    receiverId: selectedUser.id,
     text
   });
 
-  if (chatText) chatText.value = '';
+  chatText.value = '';
 }
 
-function sendLocalAI(text) {
-  const now = new Date().toISOString();
-
-  renderMessage({
-    roomId: getRoomId(),
-    senderId: currentUserId,
-    receiverId: 'ai_assistant',
-    text,
-    createdAt: now
-  });
-
-  setTimeout(() => {
-    renderMessage({
-      roomId: getRoomId(),
-      senderId: 'ai_assistant',
-      receiverId: currentUserId,
-      text: `Soul AI: кажи го по-кратко, по-човешко и с повече confidence. Пример: "${text} 😄"`,
-      createdAt: new Date().toISOString()
-    });
-  }, 600);
-}
-
-chatOpenBtn?.addEventListener('click', () => {
-  matchChat?.classList.add('open');
-  matchChat?.setAttribute('aria-hidden', 'false');
-  loadMessages();
-});
-
-chatCloseBtn?.addEventListener('click', () => {
-  matchChat?.classList.remove('open');
-  matchChat?.setAttribute('aria-hidden', 'true');
-});
-
-sendChatBtn?.addEventListener('click', () => {
-  sendMessage();
-});
-
-chatText?.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') sendMessage();
-});
-
-chatText?.addEventListener('input', () => {
-  if (!socketReady || !socket) return;
-
-  socket.emit('typing', {
-    roomId: getRoomId(),
-    userId: currentUserId
-  });
-});
-
-document.querySelectorAll('.match-item').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.match-item').forEach((b) => b.classList.remove('active'));
-    btn.classList.add('active');
-
-    receiverId = btn.dataset.userId || btn.dataset.name || 'user_match';
-    activeName = btn.dataset.name || 'Match';
-    activeCity = btn.dataset.city || 'Soul City';
-
-    if (chatPerson) {
-      chatPerson.textContent = `${activeName} · ${activeCity}`;
-    }
-
-    loadMessages();
-  });
-});
-
-document.querySelectorAll('.chat-tools [data-emoji]').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    if (!chatText) return;
-
-    chatText.value += btn.dataset.emoji;
-    chatText.focus();
-  });
-});
-
-gifBtn?.addEventListener('click', () => {
-  if (!socketReady || !socket) {
-    alert('Backend не е пуснат.');
-    return;
-  }
-
-  socket.emit('sendMessage', {
-    roomId: getRoomId(),
-    senderId: currentUserId,
-    receiverId,
-    fileUrl: 'https://media.giphy.com/media/26BRv0ThflsHCqDrG/giphy.gif',
-    fileType: 'image/gif'
-  });
-});
-
-imageInput?.addEventListener('change', async () => {
-  const file = imageInput.files?.[0];
-  if (!file) return;
+async function uploadAndSend(file) {
+  if (!file || !selectedUser) return;
 
   if (!socketReady || !socket) {
     alert('Backend не е пуснат.');
-    imageInput.value = '';
     return;
   }
 
@@ -840,25 +872,86 @@ imageInput?.addEventListener('change', async () => {
 
     socket.emit('sendMessage', {
       roomId: getRoomId(),
-      senderId: currentUserId,
-      receiverId,
+      senderId: currentUser.id,
+      receiverId: selectedUser.id,
       fileUrl: data.url,
       fileType: data.type
     });
-  } catch (err) {
-    alert('Upload failed. Провери backend-а.');
+  } catch {
+    alert('Upload failed.');
   }
+}
+
+chatOpenBtn?.addEventListener('click', async () => {
+  matchChat?.classList.add('open');
+  matchChat?.setAttribute('aria-hidden', 'false');
+  updateCurrentUserUI();
+  await registerCurrentUser();
+  await loadRealUsers();
+});
+
+chatCloseBtn?.addEventListener('click', () => {
+  matchChat?.classList.remove('open');
+  matchChat?.setAttribute('aria-hidden', 'true');
+});
+
+sendChatBtn?.addEventListener('click', sendMessage);
+
+chatText?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') sendMessage();
+});
+
+chatText?.addEventListener('input', () => {
+  if (!socketReady || !socket || !selectedUser) return;
+
+  socket.emit('typing', {
+    roomId: getRoomId(),
+    userId: currentUser.id
+  });
+});
+
+document.querySelectorAll('.chat-tools [data-emoji]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    if (!chatText) return;
+
+    chatText.value += btn.dataset.emoji;
+    chatText.focus();
+  });
+});
+
+gifBtn?.addEventListener('click', () => {
+  if (gifPicker) gifPicker.classList.toggle('open');
+});
+
+document.querySelectorAll('#gifPicker [data-gif]').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    if (!selectedUser) return;
+
+    if (!socketReady || !socket) {
+      alert('Backend не е пуснат.');
+      return;
+    }
+
+    socket.emit('sendMessage', {
+      roomId: getRoomId(),
+      senderId: currentUser.id,
+      receiverId: selectedUser.id,
+      fileUrl: btn.dataset.gif,
+      fileType: 'image/gif'
+    });
+
+    gifPicker?.classList.remove('open');
+  });
+});
+
+imageInput?.addEventListener('change', async () => {
+  const file = imageInput.files?.[0];
+  if (!file) return;
+
+  await uploadAndSend(file);
 
   imageInput.value = '';
 });
 
-aiHelpBtn?.addEventListener('click', () => {
-  const text = chatText?.value?.trim();
-
-  if (!text) {
-    sendLocalAI('Give me a good opener for this match.');
-    return;
-  }
-
-  sendLocalAI(text);
-});
+updateCurrentUserUI();
+connectSocket();
