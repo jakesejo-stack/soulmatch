@@ -21,6 +21,16 @@ function showDebug(message) {
   debugPanel.classList.add('show');
 }
 
+function escapeHTML(text) {
+  return String(text || '').replace(/[&<>"']/g, (m) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  }[m]));
+}
+
 window.addEventListener('load', () => {
   setTimeout(() => {
     loader?.classList.add('hide');
@@ -63,36 +73,14 @@ function createSafePlaneGeometry(width, height) {
   const safeWidth = safeNumber(width, FALLBACK_VIEW_WIDTH);
   const safeHeight = safeNumber(height, FALLBACK_VIEW_HEIGHT);
   const geometry = new THREE.PlaneBufferGeometry(safeWidth, safeHeight, 1, 1);
-  const position = geometry.getAttribute('position');
-
-  if (!position || !position.array || position.array.length === 0) {
-    throw new Error('Geometry test failed: missing position attribute.');
-  }
-
-  for (let i = 0; i < position.array.length; i++) {
-    if (!Number.isFinite(position.array[i])) {
-      throw new Error(`Geometry test failed: non-finite position value at index ${i}.`);
-    }
-  }
-
   geometry.computeBoundingSphere();
-
-  if (!geometry.boundingSphere || !Number.isFinite(geometry.boundingSphere.radius)) {
-    throw new Error('Geometry test failed: bounding sphere radius is not finite.');
-  }
-
   return geometry;
 }
 
 function runSelfTests() {
-  const normal = createSafePlaneGeometry(80, 50);
-  normal.dispose();
-
-  const zeroFallback = createSafePlaneGeometry(0, 0);
-  zeroFallback.dispose();
-
-  const nanFallback = createSafePlaneGeometry(Number.NaN, Number.NaN);
-  nanFallback.dispose();
+  createSafePlaneGeometry(80, 50).dispose();
+  createSafePlaneGeometry(0, 0).dispose();
+  createSafePlaneGeometry(Number.NaN, Number.NaN).dispose();
 }
 
 class TouchTexture {
@@ -113,10 +101,6 @@ class TouchTexture {
   }
 
   clear() {
-    this.ctx.shadowColor = 'transparent';
-    this.ctx.shadowBlur = 0;
-    this.ctx.shadowOffsetX = 0;
-    this.ctx.shadowOffsetY = 0;
     this.ctx.fillStyle = 'black';
     this.ctx.fillRect(0, 0, this.width, this.height);
   }
@@ -127,20 +111,16 @@ class TouchTexture {
     let force = 0;
     let vx = 0;
     let vy = 0;
-    const last = this.last;
 
-    if (last) {
-      const dx = point.x - last.x;
-      const dy = point.y - last.y;
-      if (dx === 0 && dy === 0) return;
-
-      const dd = dx * dx + dy * dy;
-      const d = Math.sqrt(dd);
+    if (this.last) {
+      const dx = point.x - this.last.x;
+      const dy = point.y - this.last.y;
+      const d = Math.sqrt(dx * dx + dy * dy);
       if (!Number.isFinite(d) || d <= 0) return;
 
       vx = dx / d;
       vy = dy / d;
-      force = Math.min(dd * 20000, 2.0);
+      force = Math.min((dx * dx + dy * dy) * 20000, 2.0);
     }
 
     this.last = { x: point.x, y: point.y };
@@ -164,8 +144,6 @@ class TouchTexture {
 
     intensity *= point.force;
 
-    if (!Number.isFinite(pos.x) || !Number.isFinite(pos.y) || !Number.isFinite(intensity)) return;
-
     const radius = this.radius;
     const offset = this.size * 5;
     const color = `${((point.vx + 1) / 2) * 255},${((point.vy + 1) / 2) * 255},${intensity * 255}`;
@@ -182,11 +160,10 @@ class TouchTexture {
 
   update() {
     this.clear();
-    const speed = this.speed;
 
     for (let i = this.trail.length - 1; i >= 0; i--) {
       const p = this.trail[i];
-      const f = p.force * speed * (1 - p.age / this.maxAge);
+      const f = p.force * this.speed * (1 - p.age / this.maxAge);
 
       p.x += p.vx * f;
       p.y += p.vy * f;
@@ -203,7 +180,7 @@ class TouchTexture {
 class LiquidApp {
   constructor() {
     if (!window.THREE) {
-      showDebug('Three.js failed to load. Check internet/CDN access.');
+      showDebug('Three.js failed to load.');
       return;
     }
 
@@ -367,9 +344,6 @@ class LiquidApp {
           uv += sin(d * 20.0 - uTime * 3.0) * 0.04 * intensity;
           vec3 color = gradient(uv, uTime);
           color += grain(uv, uTime) * uGrainIntensity;
-          color.r += sin(uTime * 0.5) * 0.02;
-          color.g += cos(uTime * 0.7) * 0.02;
-          color.b += sin(uTime * 0.6) * 0.02;
           gl_FragColor = vec4(clamp(color, 0.0, 1.0), 1.0);
         }
       `
@@ -442,9 +416,7 @@ class LiquidApp {
 let app;
 
 function getInitialScheme() {
-  const params = new URLSearchParams(window.location.search);
-  const scheme = Number(params.get('scheme') || 1);
-  return scheme === 1 ? scheme : 1;
+  return 1;
 }
 
 function updatePickers() {
@@ -488,37 +460,11 @@ document.querySelectorAll('.color-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
     const scheme = Number(btn.dataset.scheme);
 
-    if (scheme === 1) {
-      window.location.href = '../member-scheme1/';
-      return;
-    }
-
-    if (scheme === 2) {
-      window.location.href = '../member-scheme2-cities-map/';
-      return;
-    }
-
-    if (scheme === 3) {
-      window.location.href = '../member-scheme3-profiles/';
-      return;
-    }
-
-    if (scheme === 4) {
-      window.location.href = '../member-scheme4-memories/';
-      return;
-    }
-
-    if (scheme === 5) {
-      window.location.href = '../scheme5/';
-      return;
-    }
-
-    app?.setScheme(scheme);
-    setActiveButton(scheme);
-
-    const url = new URL(window.location.href);
-    url.searchParams.set('scheme', String(scheme));
-    window.history.replaceState({}, '', url);
+    if (scheme === 1) window.location.href = '../member-scheme1/';
+    if (scheme === 2) window.location.href = '../member-scheme2-cities-map/';
+    if (scheme === 3) window.location.href = '../member-scheme3-profiles/';
+    if (scheme === 4) window.location.href = '../member-scheme4-memories/';
+    if (scheme === 5) window.location.href = '../scheme5/';
   });
 });
 
@@ -591,9 +537,10 @@ document.querySelectorAll('button, input').forEach((element) => {
 });
 
 /* =========================
-   SOULMATCH CHAT
-   local demo chat + image/GIF simulation
+   SOULMATCH REAL CHAT
    ========================= */
+
+const CHAT_SERVER = 'http://localhost:3001';
 
 const chatOpenBtn = document.getElementById('chatOpenBtn');
 const chatCloseBtn = document.getElementById('chatCloseBtn');
@@ -605,145 +552,206 @@ const chatPerson = document.getElementById('chatPerson');
 const imageInput = document.getElementById('chatImageInput');
 const imageLimitText = document.getElementById('imageLimitText');
 const gifBtn = document.getElementById('gifBtn');
+const aiHelpBtn = document.getElementById('aiHelpBtn');
+const chatStatus = document.getElementById('chatStatus');
+const typingStatus = document.getElementById('typingStatus');
 
-let activeMatch = 'Elena';
+let socket = null;
+let socketReady = false;
+
+const currentUserId =
+  localStorage.getItem('soulmatch_user_id') ||
+  'user_' + Math.floor(Math.random() * 999999);
+
+localStorage.setItem('soulmatch_user_id', currentUserId);
+
+let receiverId = 'user_elena';
+let activeName = 'Elena';
 let activeCity = 'Sofia';
 
-function chatKey() {
-  return `soulmatch_chat_${activeMatch}`;
+function getRoomId() {
+  return [currentUserId, receiverId].sort().join('_');
 }
 
-function imageKey() {
-  const today = new Date().toISOString().slice(0, 10);
-  return `soulmatch_image_${activeMatch}_${today}`;
+function setChatStatus(text) {
+  if (chatStatus) chatStatus.textContent = text;
 }
 
-function getChat() {
-  try {
-    return JSON.parse(localStorage.getItem(chatKey()) || '[]');
-  } catch {
-    return [];
+function connectSocket() {
+  if (!window.io) {
+    setChatStatus('Socket.io missing');
+    return;
   }
-}
 
-function saveChat(messages) {
-  localStorage.setItem(chatKey(), JSON.stringify(messages));
-}
+  socket = io(CHAT_SERVER, {
+    transports: ['websocket', 'polling']
+  });
 
-function escapeHTML(text) {
-  return String(text || '').replace(/[&<>"']/g, (m) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;'
-  }[m]));
-}
+  socket.on('connect', () => {
+    socketReady = true;
+    setChatStatus('Online · Real chat');
+    socket.emit('joinRoom', {
+      roomId: getRoomId(),
+      userId: currentUserId
+    });
+  });
 
-function nowTime() {
-  return new Date().toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit'
+  socket.on('disconnect', () => {
+    socketReady = false;
+    setChatStatus('Offline · backend not connected');
+  });
+
+  socket.on('connect_error', () => {
+    socketReady = false;
+    setChatStatus('Backend not connected');
+  });
+
+  socket.on('newMessage', renderMessage);
+
+  socket.on('typing', (data) => {
+    if (!typingStatus || data.userId === currentUserId) return;
+
+    typingStatus.textContent = `${activeName} is typing...`;
+
+    setTimeout(() => {
+      typingStatus.textContent = '';
+    }, 1200);
   });
 }
 
-function renderChat() {
-  if (!chatMessages || !imageLimitText) return;
+connectSocket();
 
-  const messages = getChat();
+async function loadMessages() {
+  if (!chatMessages) return;
 
-  if (!messages.length) {
-    chatMessages.innerHTML = `
-      <div class="msg">
-        Say hi to ${escapeHTML(activeMatch)} 👋<br>
-        <small>Local demo chat</small>
-      </div>
-    `;
-  } else {
-    chatMessages.innerHTML = messages.map((m) => {
-      const side = m.me ? 'me' : '';
+  chatMessages.innerHTML = `
+    <div class="msg">
+      Loading chat...
+    </div>
+  `;
 
-      if (m.type === 'image') {
-        return `
-          <div class="msg ${side}">
-            <img src="${m.src}" alt="chat image">
-            <small>${escapeHTML(m.time)}</small>
-          </div>
-        `;
-      }
+  if (socketReady && socket) {
+    socket.emit('joinRoom', {
+      roomId: getRoomId(),
+      userId: currentUserId
+    });
+  }
 
-      if (m.type === 'gif') {
-        return `
-          <div class="msg ${side}">
-            <img src="${m.src}" alt="gif">
-            <small>${escapeHTML(m.time)}</small>
-          </div>
-        `;
-      }
+  try {
+    const res = await fetch(`${CHAT_SERVER}/messages/${getRoomId()}`);
+    const data = await res.json();
 
-      return `
-        <div class="msg ${side}">
-          ${escapeHTML(m.text)}<br>
-          <small>${escapeHTML(m.time)}</small>
+    chatMessages.innerHTML = '';
+
+    if (!data.length) {
+      chatMessages.innerHTML = `
+        <div class="msg">
+          Say hi to ${escapeHTML(activeName)} 👋
+          <br>
+          <small>Real user-to-user chat room</small>
         </div>
       `;
-    }).join('');
+    } else {
+      data.forEach(renderMessage);
+    }
+  } catch (err) {
+    chatMessages.innerHTML = `
+      <div class="msg">
+        Backend не е пуснат още.
+        <br>
+        <small>Пусни backend/server.js на localhost:3001</small>
+      </div>
+    `;
+  }
+
+  if (imageLimitText) {
+    imageLimitText.textContent = 'Images, files, GIFs and AI helper ready';
+  }
+}
+
+function renderMessage(m) {
+  if (!chatMessages || !m) return;
+
+  const side = m.senderId === currentUserId ? 'me' : '';
+  const aiClass = m.senderId === 'ai_assistant' ? 'ai' : '';
+  const time = m.createdAt
+    ? new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : '';
+
+  if (m.fileUrl) {
+    chatMessages.insertAdjacentHTML('beforeend', `
+      <div class="msg ${side} ${aiClass}">
+        ${
+          m.fileType && m.fileType.startsWith('image')
+            ? `<img src="${escapeHTML(m.fileUrl)}" alt="chat image">`
+            : `<a href="${escapeHTML(m.fileUrl)}" target="_blank">📎 Open file</a>`
+        }
+        <small>${escapeHTML(time)}</small>
+      </div>
+    `);
+  } else {
+    chatMessages.insertAdjacentHTML('beforeend', `
+      <div class="msg ${side} ${aiClass}">
+        ${escapeHTML(m.text)}
+        <small>${escapeHTML(time)}</small>
+      </div>
+    `);
   }
 
   chatMessages.scrollTop = chatMessages.scrollHeight;
-
-  const used = localStorage.getItem(imageKey()) === 'used';
-  imageLimitText.textContent = used ? 'Image limit today: 0/1' : 'Image limit today: 1/1';
 }
 
-function pushMessage(message) {
-  const messages = getChat();
+function sendMessage(textOverride) {
+  const text = String(textOverride ?? chatText?.value ?? '').trim();
+  if (!text) return;
 
-  messages.push({
-    ...message,
-    time: nowTime()
-  });
+  if (receiverId === 'ai_assistant') {
+    sendLocalAI(text);
+    if (chatText) chatText.value = '';
+    return;
+  }
 
-  saveChat(messages);
-  renderChat();
-}
+  if (!socketReady || !socket) {
+    alert('Backend не е пуснат. Първо стартирай server.js.');
+    return;
+  }
 
-function fakeReceiveReply(customText) {
-  setTimeout(() => {
-    const replies = [
-      'Hahaa cute 😄',
-      'I like your vibe 🔥',
-      'Tell me more.',
-      'That sounds nice ❤️',
-      'Send me another one later 👀'
-    ];
-
-    pushMessage({
-      type: 'text',
-      text: customText || replies[Math.floor(Math.random() * replies.length)],
-      me: false
-    });
-  }, 900);
-}
-
-function sendMessage(text) {
-  const value = String(text || '').trim();
-  if (!value) return;
-
-  pushMessage({
-    type: 'text',
-    text: value,
-    me: true
+  socket.emit('sendMessage', {
+    roomId: getRoomId(),
+    senderId: currentUserId,
+    receiverId,
+    text
   });
 
   if (chatText) chatText.value = '';
-  fakeReceiveReply();
+}
+
+function sendLocalAI(text) {
+  const now = new Date().toISOString();
+
+  renderMessage({
+    roomId: getRoomId(),
+    senderId: currentUserId,
+    receiverId: 'ai_assistant',
+    text,
+    createdAt: now
+  });
+
+  setTimeout(() => {
+    renderMessage({
+      roomId: getRoomId(),
+      senderId: 'ai_assistant',
+      receiverId: currentUserId,
+      text: `Soul AI: кажи го по-кратко, по-човешко и с повече confidence. Пример: "${text} 😄"`,
+      createdAt: new Date().toISOString()
+    });
+  }, 600);
 }
 
 chatOpenBtn?.addEventListener('click', () => {
   matchChat?.classList.add('open');
   matchChat?.setAttribute('aria-hidden', 'false');
-  renderChat();
+  loadMessages();
 });
 
 chatCloseBtn?.addEventListener('click', () => {
@@ -752,11 +760,20 @@ chatCloseBtn?.addEventListener('click', () => {
 });
 
 sendChatBtn?.addEventListener('click', () => {
-  sendMessage(chatText?.value || '');
+  sendMessage();
 });
 
 chatText?.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') sendMessage(chatText.value);
+  if (e.key === 'Enter') sendMessage();
+});
+
+chatText?.addEventListener('input', () => {
+  if (!socketReady || !socket) return;
+
+  socket.emit('typing', {
+    roomId: getRoomId(),
+    userId: currentUserId
+  });
 });
 
 document.querySelectorAll('.match-item').forEach((btn) => {
@@ -764,14 +781,15 @@ document.querySelectorAll('.match-item').forEach((btn) => {
     document.querySelectorAll('.match-item').forEach((b) => b.classList.remove('active'));
     btn.classList.add('active');
 
-    activeMatch = btn.dataset.name || 'Match';
+    receiverId = btn.dataset.userId || btn.dataset.name || 'user_match';
+    activeName = btn.dataset.name || 'Match';
     activeCity = btn.dataset.city || 'Soul City';
 
     if (chatPerson) {
-      chatPerson.textContent = `${activeMatch} · ${activeCity}`;
+      chatPerson.textContent = `${activeName} · ${activeCity}`;
     }
 
-    renderChat();
+    loadMessages();
   });
 });
 
@@ -785,40 +803,62 @@ document.querySelectorAll('.chat-tools [data-emoji]').forEach((btn) => {
 });
 
 gifBtn?.addEventListener('click', () => {
-  pushMessage({
-    type: 'gif',
-    src: 'https://media.giphy.com/media/26BRv0ThflsHCqDrG/giphy.gif',
-    me: true
-  });
+  if (!socketReady || !socket) {
+    alert('Backend не е пуснат.');
+    return;
+  }
 
-  fakeReceiveReply('I received your GIF ✨');
+  socket.emit('sendMessage', {
+    roomId: getRoomId(),
+    senderId: currentUserId,
+    receiverId,
+    fileUrl: 'https://media.giphy.com/media/26BRv0ThflsHCqDrG/giphy.gif',
+    fileType: 'image/gif'
+  });
 });
 
-imageInput?.addEventListener('change', () => {
+imageInput?.addEventListener('change', async () => {
   const file = imageInput.files?.[0];
   if (!file) return;
 
-  if (localStorage.getItem(imageKey()) === 'used') {
-    alert('Можеш да качваш само 1 снимка на ден към този match.');
+  if (!socketReady || !socket) {
+    alert('Backend не е пуснат.');
     imageInput.value = '';
     return;
   }
 
-  const reader = new FileReader();
+  const formData = new FormData();
+  formData.append('file', file);
 
-  reader.onload = () => {
-    pushMessage({
-      type: 'image',
-      src: reader.result,
-      me: true
+  try {
+    const res = await fetch(`${CHAT_SERVER}/upload`, {
+      method: 'POST',
+      body: formData
     });
 
-    localStorage.setItem(imageKey(), 'used');
-    imageInput.value = '';
+    const data = await res.json();
 
-    fakeReceiveReply('I received your photo 📷');
-  };
+    socket.emit('sendMessage', {
+      roomId: getRoomId(),
+      senderId: currentUserId,
+      receiverId,
+      fileUrl: data.url,
+      fileType: data.type
+    });
+  } catch (err) {
+    alert('Upload failed. Провери backend-а.');
+  }
 
-  reader.readAsDataURL(file);
-    
+  imageInput.value = '';
+});
+
+aiHelpBtn?.addEventListener('click', () => {
+  const text = chatText?.value?.trim();
+
+  if (!text) {
+    sendLocalAI('Give me a good opener for this match.');
+    return;
+  }
+
+  sendLocalAI(text);
 });
