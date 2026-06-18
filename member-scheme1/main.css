@@ -5,7 +5,7 @@ html, body {
   height: 100%;
   min-width: 320px;
   min-height: 480px;
-  overflow: hidden;
+  overflow: auto;
 }
 
 body {
@@ -730,4 +730,72 @@ p, a, button, input, textarea, label { overflow-wrap: anywhere; }
   .match-chat {
     width: 88vw;
   }
+}
+
+.match-chat {
+  background: #ffffff !important;
+  color: #111 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding-bottom: 140px !important;
+}
+
+.chat-head {
+  background: #ffffff !important;
+  color: #111 !important;
+}
+
+.chat-head span,
+.current-user-box,
+.typing-status,
+#imageLimitText {
+  color: #555 !important;
+}
+
+.current-user-box,
+.chat-messages,
+.empty-users,
+.msg,
+.chat-input input {
+  background: #f2f2f7 !important;
+  color: #111 !important;
+  border: 1px solid #ddd !important;
+}
+
+.chat-messages {
+  max-height: none !important;
+  min-height: 360px !important;
+  overflow-y: auto !important;
+}
+
+.msg.me {
+  background: linear-gradient(135deg, #00ffd5, #0aa4ff) !important;
+  color: #001018 !important;
+}
+
+.chat-tools button,
+.image-btn,
+.chat-input button,
+.gif-picker button {
+  background: #eeeeee !important;
+  color: #111 !important;
+  border: 1px solid #d6d6d6 !important;
+}
+
+.chat-input {
+  position: sticky;
+  bottom: 0;
+  background: #ffffff;
+  padding-bottom: 10px;
+}
+
+.chat-tools {
+  position: sticky;
+  bottom: 62px;
+  background: #ffffff;
+  padding-top: 8px;
+}
+
+.chat-input input::placeholder {
+  color: #777;
 }
