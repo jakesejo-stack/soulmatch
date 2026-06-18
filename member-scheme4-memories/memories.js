@@ -1,2 +1,170 @@
-'use strict';const canvas=document.getElementById('memoryMap'),ctx=canvas.getContext('2d');function size(){canvas.width=canvas.clientWidth*devicePixelRatio;canvas.height=canvas.clientHeight*devicePixelRatio;draw([])}addEventListener('resize',size);size();function draw(mem){ctx.clearRect(0,0,canvas.width,canvas.height);const g=ctx.createRadialGradient(canvas.width*.4,canvas.height*.3,0,canvas.width*.5,canvas.height*.5,canvas.width*.8);g.addColorStop(0,'rgba(117,255,185,.20)');g.addColorStop(.5,'rgba(56,203,255,.10)');g.addColorStop(1,'rgba(5,7,19,1)');ctx.fillStyle=g;ctx.fillRect(0,0,canvas.width,canvas.height);ctx.strokeStyle='rgba(255,255,255,.08)';for(let x=0;x<canvas.width;x+=70*devicePixelRatio){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,canvas.height);ctx.stroke()}for(let y=0;y<canvas.height;y+=70*devicePixelRatio){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(canvas.width,y);ctx.stroke()}mem.forEach((m,i)=>{const x=(.18+((i*137)%70)/100)*canvas.width,y=(.2+((i*91)%62)/100)*canvas.height;ctx.fillStyle='rgba(117,255,185,.86)';ctx.beginPath();ctx.arc(x,y,7*devicePixelRatio,0,Math.PI*2);ctx.fill();ctx.fillStyle='white';ctx.font=`${12*devicePixelRatio}px Inter`;ctx.fillText(m.city||'Memory',x+12*devicePixelRatio,y);});}
-async function load(range='0-6'){document.querySelectorAll('.filters button').forEach(b=>b.classList.toggle('active',b.dataset.range===range));const d=await (await fetch('/api/memories?range='+encodeURIComponent(range))).json();const mem=d.memories||[];draw(mem);document.getElementById('memoryList').innerHTML=mem.map(m=>`<div class="memory"><b>${m.title}</b><span>${m.city} · ${m.range}</span><p>${m.text}</p><small>${m.status}</small></div>`).join('')||'<p>No memories yet.</p>'}document.querySelectorAll('.filters button').forEach(b=>b.onclick=()=>load(b.dataset.range));load();
+'use strict';
+
+const memoryList = document.getElementById('memoryList');
+const clearBtn = document.getElementById('clearMemories');
+
+const STORAGE_KEY = 'soul_memory_route';
+
+let route = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+let userMarker = null;
+let routeLine = null;
+
+const map = L.map('memoryMap', {
+  zoomControl: false
+}).setView([42.6817, 26.3229], 13);
+
+L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '&copy; OpenStreetMap'
+}).addTo(map);
+
+function saveRoute() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(route));
+}
+
+function getRangeDays(range) {
+  if (range === '0-6') return [0, 6];
+  if (range === '6-12') return [6, 12];
+  if (range === '12-23') return [12, 23];
+  if (range === '23-100') return [23, 100];
+  if (range === '100+') return [100, Infinity];
+  return [0, Infinity];
+}
+
+function filterRoute(range = '0-6') {
+  const now = Date.now();
+  const [min, max] = getRangeDays(range);
+
+  return route.filter(item => {
+    const days = (now - item.time) / 86400000;
+    return days >= min && days <= max;
+  });
+}
+
+function addMemoryPoint(lat, lng, accuracy) {
+  const last = route[route.length - 1];
+
+  if (last) {
+    const sameArea =
+      Math.abs(last.lat - lat) < 0.00015 &&
+      Math.abs(last.lng - lng) < 0.00015;
+
+    if (sameArea) return;
+  }
+
+  route.push({
+    lat,
+    lng,
+    title: 'Live activity',
+    city: 'Current area',
+    range: 'now',
+    text: `Saved movement point. Accuracy ~${Math.round(accuracy || 0)}m.`,
+    status: 'tracking',
+    time: Date.now()
+  });
+
+  route = route.slice(-500);
+  saveRoute();
+}
+
+function renderRoute(range = '0-6') {
+  const memories = filterRoute(range);
+
+  if (routeLine) {
+    routeLine.remove();
+    routeLine = null;
+  }
+
+  const points = memories.map(m => [m.lat, m.lng]);
+
+  if (points.length > 1) {
+    routeLine = L.polyline(points, {
+      weight: 4,
+      opacity: 0.85
+    }).addTo(map);
+  }
+
+  memories.forEach(m => {
+    if (m._marker) return;
+
+    m._marker = L.circleMarker([m.lat, m.lng], {
+      radius: 7,
+      weight: 2,
+      fillOpacity: 0.9
+    }).addTo(map).bindPopup(`
+      <b>${m.title}</b><br>
+      ${m.city}<br>
+      ${new Date(m.time).toLocaleString()}
+    `);
+  });
+
+  memoryList.innerHTML = memories.slice().reverse().map(m => `
+    <div class="memory">
+      <b>${m.title}</b>
+      <span>${m.city} · ${m.range}</span>
+      <p>${m.text}</p>
+      <small>${m.status} · ${new Date(m.time).toLocaleString()}</small>
+    </div>
+  `).join('') || '<p>No memories yet. Allow location and start moving.</p>';
+}
+
+function startTracking() {
+  if (!navigator.geolocation) {
+    memoryList.innerHTML = '<p>GPS is not supported on this device.</p>';
+    return;
+  }
+
+  navigator.geolocation.watchPosition(
+    position => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      const accuracy = position.coords.accuracy;
+
+      if (!userMarker) {
+        userMarker = L.marker([lat, lng])
+          .addTo(map)
+          .bindPopup('You are here');
+
+        map.setView([lat, lng], 16);
+      } else {
+        userMarker.setLatLng([lat, lng]);
+      }
+
+      addMemoryPoint(lat, lng, accuracy);
+
+      const activeRange =
+        document.querySelector('.filters button.active')?.dataset.range || '0-6';
+
+      renderRoute(activeRange);
+    },
+    () => {
+      memoryList.innerHTML = '<p>Allow location permission to start Memory Map tracking.</p>';
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 5000,
+      timeout: 15000
+    }
+  );
+}
+
+document.querySelectorAll('.filters button[data-range]').forEach(button => {
+  button.addEventListener('click', () => {
+    document.querySelectorAll('.filters button[data-range]')
+      .forEach(btn => btn.classList.remove('active'));
+
+    button.classList.add('active');
+    renderRoute(button.dataset.range);
+  });
+});
+
+clearBtn.addEventListener('click', () => {
+  route = [];
+  saveRoute();
+  location.reload();
+});
+
+renderRoute('0-6');
+startTracking();
