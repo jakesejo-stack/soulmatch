@@ -19,16 +19,33 @@
 <section class="city-cont" aria-label="Bulgaria city slides">
   <div class="city-slider" id="citySlider"></div>
   <ul class="city-nav" id="cityNav"></ul>
-  <button class="side left" id="leftBtn" aria-label="Previous city">‹</button>
-  <button class="side right" id="rightBtn" aria-label="Next city">›</button>
+  <button class="side left" id="leftBtn">‹</button>
+  <button class="side right" id="rightBtn">›</button>
   <div class="hint">Swipe / wheel / arrows · last slide opens AR Live Map</div>
 </section>
+
 <button id="mapFloatCta" class="map-float-cta" type="button">↓ Real-time AR Map</button>
 
 <section id="liveMapSection" class="live-map-section">
+
   <div class="cube-wrap" id="cubeWrap">
-    <div class="cube" id="mapCube"><span>MAP</span><span>LIVE</span><span>POV</span><span>AR</span></div>
-    <p class="cube-hint">3D cube unlocks the map engine</p>
+    <div class="ar-cube-box" id="mapCube">
+      <div class="cube-inside-screen">
+        <div class="scanline"></div>
+        <div class="inside-title">AR LIVE POV</div>
+        <div class="inside-grid"></div>
+        <div class="inside-dot"></div>
+        <div class="inside-text">CAMERA / MAP / YOU</div>
+      </div>
+
+      <span class="face front">MAP</span>
+      <span class="face right">LIVE</span>
+      <span class="face back">POV</span>
+      <span class="face left">AR</span>
+      <span class="face top"></span>
+      <span class="face bottom"></span>
+    </div>
+    <p class="cube-hint">AR box preview · map engine inside</p>
   </div>
 
   <div class="map-copy">
@@ -72,6 +89,7 @@
           <div class="pov-crosshair"></div>
           <div class="pov-coords" id="povCoords">Waiting for coordinates...</div>
         </div>
+
         <div class="controls">
           <button data-move="forward">▲</button>
           <button data-move="left">◀</button>
@@ -91,7 +109,7 @@
 
     <form id="avatarForm" class="avatar-form">
       <h2>Own avatar</h2>
-      <p>Upload a photo or short video to appear inside the AR map view. The file stays local/dev in your project while we prototype.</p>
+      <p>Upload a photo or short video to appear inside the AR map view.</p>
       <input id="avatarFile" name="avatar" type="file" accept="image/*,video/*">
       <button type="submit">Upload avatar</button>
       <div id="avatarOutput" class="output small-output">No avatar uploaded yet.</div>
@@ -101,13 +119,16 @@
   <form id="updateForm" class="update-form">
     <h2>Upload Live News</h2>
     <input id="updateText" placeholder="What is happening around you?" maxlength="220">
-    <select id="updateVisibility"><option value="24h">Visible 24h</option><option value="7d">Visible 7 days</option></select>
+    <select id="updateVisibility">
+      <option value="24h">Visible 24h</option>
+      <option value="7d">Visible 7 days</option>
+    </select>
     <button>Post pending update</button>
   </form>
 
   <div class="news-panel">
     <h2>Live News Around</h2>
-    <p class="muted">Updates are pending by default. Approved updates can later become Echo tasks/memories.</p>
+    <p class="muted">Updates are pending by default.</p>
     <div id="updatesList"></div>
   </div>
 </section>
