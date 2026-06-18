@@ -799,3 +799,65 @@ p, a, button, input, textarea, label { overflow-wrap: anywhere; }
 .chat-input input::placeholder {
   color: #777;
 }
+.match-chat {
+  padding-bottom: 24px !important;
+}
+
+.chat-box {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+}
+
+.chat-messages {
+  min-height: 300px !important;
+  max-height: 45dvh !important;
+  margin-bottom: 0 !important;
+}
+
+.chat-tools {
+  position: static !important;
+  display: flex !important;
+  order: 2 !important;
+  background: #fff !important;
+  padding: 8px 0 !important;
+  margin-top: 0 !important;
+  z-index: 5 !important;
+}
+
+.chat-input {
+  position: static !important;
+  order: 3 !important;
+  background: #fff !important;
+  margin-top: 0 !important;
+  z-index: 5 !important;
+}
+
+#imageLimitText {
+  order: 4 !important;
+}
+
+.chat-tools button,
+.image-btn,
+.chat-input button {
+  background: #d9d9df !important;
+  color: #111 !important;
+  border: 1px solid #c4c4cc !important;
+}
+
+.chat-input input {
+  background: #eeeeF2 !important;
+  color: #111 !important;
+  border: 1px solid #c9c9d0 !important;
+}
+
+.gif-picker {
+  order: 1 !important;
+  background: #fff !important;
+}
+
+.gif-picker button {
+  background: #d9d9df !important;
+  color: #111 !important;
+  border: 1px solid #c4c4cc !important;
+}
