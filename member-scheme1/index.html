@@ -3,58 +3,116 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>SoulMatch Member Main</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <!-- Real-time chat client -->
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+
   <link rel="stylesheet" href="./main.css" />
 </head>
 
 <body>
   <div class="loader-screen" id="loader">
     <div class="logo-reveal">
-      <div class="logo-mark"><div class="soul-logo">SM</div></div>
+      <div class="logo-mark">
+        <div class="soul-logo">SM</div>
+      </div>
+
       <div class="logo-text">SoulMatch</div>
       <div class="logo-sub">Logged-in SoulMatch</div>
     </div>
   </div>
 
   <main class="app" id="app">
-    <h1 class="heading">SoulMatch<span>Member Main</span></h1>
+    <h1 class="heading">
+      SoulMatch
+      <span>Member Main</span>
+    </h1>
 
     <div class="color-controls">
-  <button class="color-btn active" data-scheme="1">Home</button>
-  <button class="color-btn" data-scheme="2">AR Cities</button>
-  <button class="color-btn" data-scheme="3">Profiles</button>
-  <button class="color-btn" data-scheme="4">Memories</button>
-  <button class="color-btn login-register-btn" data-scheme="5">Echo AI</button>
+      <button class="color-btn active" data-scheme="1">Home</button>
+      <button class="color-btn" data-scheme="2">AR Cities</button>
+      <button class="color-btn" data-scheme="3">Profiles</button>
+      <button class="color-btn" data-scheme="4">Memories</button>
+      <button class="color-btn login-register-btn" data-scheme="5">Echo AI</button>
     </div>
 
-    <button class="toggle-adjuster-btn" id="toggleAdjusterBtn">Adjust Colors</button>
+    <button class="toggle-adjuster-btn" id="toggleAdjusterBtn">
+      Adjust Colors
+    </button>
 
-    <button class="chat-open-btn" id="chatOpenBtn">💬 Chat</button>
+    <button class="chat-open-btn" id="chatOpenBtn">
+      💬 Chat
+    </button>
 
     <aside class="match-chat" id="matchChat" aria-hidden="true">
       <div class="chat-head">
         <div>
           <b>SoulMatch Chat</b>
-          <span>Matches · Messenger mode</span>
+          <span id="chatStatus">Real chat · User to user</span>
         </div>
+
         <button id="chatCloseBtn" aria-label="Close chat">×</button>
       </div>
 
       <div class="match-list" id="matchList">
-        <button class="match-item active" data-name="Elena" data-city="Sofia">🌙 Elena <span>98%</span></button>
-        <button class="match-item" data-name="Mira" data-city="Varna">🔥 Mira <span>94%</span></button>
-        <button class="match-item" data-name="Alex" data-city="Burgas">⭐ Alex <span>91%</span></button>
+        <button
+          class="match-item active"
+          data-user-id="user_elena"
+          data-name="Elena"
+          data-city="Sofia"
+        >
+          🌙 Elena <span>98%</span>
+        </button>
+
+        <button
+          class="match-item"
+          data-user-id="user_mira"
+          data-name="Mira"
+          data-city="Varna"
+        >
+          🔥 Mira <span>94%</span>
+        </button>
+
+        <button
+          class="match-item"
+          data-user-id="user_alex"
+          data-name="Alex"
+          data-city="Burgas"
+        >
+          ⭐ Alex <span>91%</span>
+        </button>
+
+        <button
+          class="match-item ai-match"
+          data-user-id="ai_assistant"
+          data-name="Soul AI"
+          data-city="Assistant"
+        >
+          🤖 AI <span>Help</span>
+        </button>
       </div>
 
       <div class="chat-box">
-        <div class="chat-person" id="chatPerson">Elena · Sofia</div>
-        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-person" id="chatPerson">
+          Elena · Sofia
+        </div>
+
+        <div class="typing-status" id="typingStatus"></div>
+
+        <div class="chat-messages" id="chatMessages">
+          <div class="msg">
+            Open chat and start messaging 👋
+          </div>
+        </div>
 
         <div class="chat-tools">
           <button type="button" data-emoji="❤️">❤️</button>
@@ -64,30 +122,56 @@
 
           <label class="image-btn">
             📷
-            <input type="file" id="chatImageInput" accept="image/*" hidden />
+            <input
+              type="file"
+              id="chatImageInput"
+              accept="image/*,.pdf,.doc,.docx,.txt,.zip"
+              hidden
+            />
           </label>
+
+          <button type="button" id="aiHelpBtn">AI</button>
         </div>
 
         <div class="chat-input">
-          <input id="chatText" placeholder="Message your match..." />
+          <input
+            id="chatText"
+            placeholder="Message your match..."
+            autocomplete="off"
+          />
+
           <button type="button" id="sendChatBtn">➤</button>
         </div>
 
-        <small id="imageLimitText">1 image per day</small>
+        <small id="imageLimitText">
+          Images, files, GIFs and AI helper ready
+        </small>
       </div>
     </aside>
 
     <div class="color-adjuster-panel" id="colorAdjusterPanel">
       <div class="color-adjuster-header">
         <h3 class="color-adjuster-title">Color Adjuster</h3>
-        <button class="color-adjuster-close" id="closeAdjusterBtn" aria-label="Close color adjuster">×</button>
+
+        <button
+          class="color-adjuster-close"
+          id="closeAdjusterBtn"
+          aria-label="Close color adjuster"
+        >
+          ×
+        </button>
       </div>
 
       <div id="colorPickers"></div>
-      <button class="export-btn" id="exportAllBtn">Export All Colors</button>
+
+      <button class="export-btn" id="exportAllBtn">
+        Export All Colors
+      </button>
     </div>
 
-    <footer class="footer">Member World / Scheme 1</footer>
+    <footer class="footer">
+      Member World / Scheme 1
+    </footer>
 
     <div class="custom-cursor" id="customCursor"></div>
     <div class="debug-panel" id="debugPanel"></div>
